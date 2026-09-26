@@ -1,0 +1,2420 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#4F46E5" />
+<title>🤖 Vui Học - Đấu trường kiến thức</title>
+
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" type="image/svg+xml" href="icon.svg" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          baloo: ['"Baloo 2"', 'cursive'],
+          nunito: ['Nunito', 'sans-serif'],
+        },
+        colors: {
+          brand: {
+            50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',
+            500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',
+          },
+          sunny:'#FCD34D', coral:'#FB7185', mint:'#34D399', sky:'#38BDF8',
+        },
+        animation: {
+          'bounce-slow':'bounce 2s infinite',
+          'float':'float 3s ease-in-out infinite',
+          'wiggle':'wiggle 0.5s ease-in-out',
+          'spin-slow':'spin 3s linear infinite',
+        },
+        keyframes: {
+          float: { '0%,100%':{transform:'translateY(0)'}, '50%':{transform:'translateY(-10px)'} },
+          wiggle: { '0%,100%':{transform:'rotate(0deg)'}, '25%':{transform:'rotate(-5deg)'}, '75%':{transform:'rotate(5deg)'} },
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+* { -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Nunito', sans-serif; overscroll-behavior: none; }
+
+.role-btn { transition: all 0.2s ease; }
+.role-btn.role-active {
+  border-color: #6366f1 !important;
+  background: #6366f1 !important;
+  color: white !important;
+  box-shadow: 0 10px 20px -5px rgba(99,102,241,0.5);
+  transform: translateY(-2px);
+}
+
+.answer-option {
+  transition: all 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+.answer-option:hover:not(.answer-disabled):not(.answer-correct):not(.answer-wrong) {
+  transform: translateX(6px);
+  border-color: #6366f1;
+  background: #eef2ff;
+}
+.answer-option.answer-correct {
+  border-color: #34D399 !important;
+  background: #d1fae5 !important;
+  animation: correctPulse 0.4s ease;
+}
+.answer-option.answer-wrong {
+  border-color: #FB7185 !important;
+  background: #ffe4e6 !important;
+  animation: wrongShake 0.4s ease;
+}
+.answer-option.answer-disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+  pointer-events: none;
+}
+@keyframes correctPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+@keyframes wrongShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+.timer-bar { transition: width 1s linear, background-color 0.3s ease; }
+
+.toast { animation: toastSlideIn 0.3s ease-out; }
+@keyframes toastSlideIn {
+  from { opacity:0; transform:translateY(-20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.confetti {
+  position: fixed; width: 10px; height: 10px;
+  pointer-events: none; z-index: 100;
+  animation: confettiFall 2.5s linear forwards;
+}
+@keyframes confettiFall {
+  0%   { transform:translateY(-100vh) rotate(0deg); opacity:1; }
+  100% { transform:translateY(100vh) rotate(720deg); opacity:0; }
+}
+
+.animate-pop { animation: popIn 0.3s cubic-bezier(0.68,-0.55,0.27,1.55); }
+@keyframes popIn {
+  0%   { transform:scale(0.5); opacity:0; }
+  100% { transform:scale(1); opacity:1; }
+}
+
+.spinner {
+  border: 4px solid #e0e7ff;
+  border-top: 4px solid #6366f1;
+  border-radius: 50%;
+  width: 40px; height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin { 100% { transform:rotate(360deg); } }
+
+.nav-back-btn, .nav-home-btn {
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(8px);
+  border: 2px solid #c7d2fe;
+  color: #4338ca;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(99,102,241,0.2);
+  transition: all 0.2s;
+  font-size: 14px;
+}
+.nav-back-btn:hover, .nav-home-btn:hover { background:#eef2ff; transform:translateY(-2px); }
+
+/* Vòng quay */
+.wheel-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 0 auto;
+}
+.wheel {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transition: transform 4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 10px 40px rgba(99,102,241,0.4), inset 0 0 0 8px #fff, inset 0 0 0 12px #6366f1;
+}
+.wheel-pointer {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 36px;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+  z-index: 10;
+}
+.wheel-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #FCD34D, #FB7185);
+  border-radius: 50%;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  z-index: 5;
+}
+
+.reward-card {
+  background: linear-gradient(135deg, #FCD34D 0%, #FB7185 100%);
+  color: white;
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(251,113,133,0.3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #eef2ff; }
+::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+
+button { user-select: none; }
+</style>
+</head>
+
+<body class="font-nunito bg-gradient-to-br from-brand-100 via-sky-100 to-sunny/30 min-h-screen overflow-x-hidden">
+
+<div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+  <div class="absolute top-10 left-10 text-6xl opacity-20 animate-float">⭐</div>
+  <div class="absolute top-32 right-16 text-5xl opacity-20 animate-float" style="animation-delay:0.5s">✨</div>
+  <div class="absolute bottom-20 left-20 text-6xl opacity-20 animate-float" style="animation-delay:1s">🎈</div>
+  <div class="absolute bottom-40 right-10 text-5xl opacity-20 animate-float" style="animation-delay:1.5s">🌟</div>
+</div>
+
+<div id="app" class="min-h-screen flex flex-col"></div>
+<div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center"></div>
+
+<script>
+// ============================================
+// VUI HỌC — APP v3.0
+// ============================================
+
+const API_URL = 'https://script.google.com/macros/s/AKfycbztO88kMMXwKGgBkLfxZ-HiyCUxbXZYc1A-lfnOjJKV3DDXMFPEUpKOVdycJKoNyvrL/exec';
+const API_KEY = 'vuihoc_family_2026';
+
+// ===== SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then((reg) => console.log('[SW] OK:', reg.scope))
+      .catch((err) => console.warn('[SW] Lỗi:', err));
+  });
+}
+
+// ===== API CLIENT =====
+async function apiCall(action, payload = {}, method = 'GET') {
+  try {
+    let url = API_URL;
+    const options = { method };
+    if (method === 'GET') {
+      const params = new URLSearchParams({ key: API_KEY, action, ...payload });
+      url += '?' + params.toString();
+      options.redirect = 'follow';
+    } else {
+      options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
+      options.body = JSON.stringify({ key: API_KEY, action, payload });
+      options.redirect = 'follow';
+    }
+    const res = await fetch(url, options);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'API error');
+    return json.data;
+  } catch (err) {
+    console.error('[API]', action, err);
+    throw err;
+  }
+}
+
+// ===== FALLBACK =====
+const FALLBACK_USERS = [
+  { id:'a001', username:'admin', password:'1234', role:'admin',   display_name:'Quản trị viên', total_score:0 },
+  { id:'u001', username:'minh',  password:'1234', role:'student', display_name:'Bé Minh',        total_score:0 },
+  { id:'u002', username:'lan',   password:'1234', role:'student', display_name:'Bé Lan',         total_score:0 },
+  { id:'p001', username:'bome',  password:'1234', role:'parent',  display_name:'Bố Mẹ',          total_score:0 },
+];
+const FALLBACK_SUBJECTS = [{ id:'toan', name:'Toán', description:'Toán lớp 4' }];
+const FALLBACK_TRACKS = {
+  toan: [{ id:'vio4', subject_id:'toan', name:'Violympic lớp 4', description:'Bộ đề Violympic Toán 4' }],
+};
+const FALLBACK_QUESTIONS = [
+  { id:'q001', subject:'toan', track:'vio4', question:'Khi viết chữ số 5 vào bên trái một số có ba chữ số thì số mới hơn số cũ bao nhiêu đơn vị?', options:['500','5000','50000','500000'], correct:1 },
+  { id:'q002', subject:'toan', track:'vio4', question:'Số bé nhất có năm chữ số là số nào?', options:['10000','11111','12345','99999'], correct:0 },
+  { id:'q003', subject:'toan', track:'vio4', question:'Số lớn nhất có sáu chữ số là số nào?', options:['100000','999999','987654','999998'], correct:1 },
+  { id:'q004', subject:'toan', track:'vio4', question:'Số lớn nhất có sáu chữ số khác nhau là số nào?', options:['987654','999999','987655','987650'], correct:0 },
+  { id:'q005', subject:'toan', track:'vio4', question:'Số nhỏ nhất có năm chữ số khác nhau là số nào?', options:['10234','12345','10000','11111'], correct:0 },
+  { id:'q006', subject:'toan', track:'vio4', question:'Dãy số tự nhiên liên tiếp từ 325 đến 796 có tất cả bao nhiêu số lẻ?', options:['236','235','237','234'], correct:0 },
+  { id:'q007', subject:'toan', track:'vio4', question:'Dãy số tự nhiên liên tiếp từ 324 đến 987 có tất cả bao nhiêu số chẵn?', options:['331','332','333','334'], correct:1 },
+  { id:'q008', subject:'toan', track:'vio4', question:'Tìm trung bình cộng của các số lẻ có hai chữ số lớn hơn 79.', options:['89','90','91','92'], correct:0 },
+  { id:'q009', subject:'toan', track:'vio4', question:'Trung bình cộng của ba số là 25, trung bình cộng của số thứ nhất và số thứ hai là 22. Tìm số thứ ba.', options:['28','29','30','31'], correct:2 },
+  { id:'q010', subject:'toan', track:'vio4', question:'Tổng của hai số tự nhiên là 346. Biết số bé là số có hai chữ số và khi viết thêm chữ số 2 vào trước số bé thì được số lớn. Tìm hai số đó.', options:['123 và 223','146 và 200','150 và 196','173 và 173'], correct:0 },
+];
+
+function shuffleOptions(q) {
+  const indices = [0,1,2,3].sort(() => Math.random() - 0.5);
+  const newOptions = indices.map((i) => q.options[i]);
+  const newCorrect = indices.indexOf(q.correct);
+  return { ...q, options: newOptions, correct: newCorrect };
+}
+function getLocalQuestions(subject, track, n) {
+  const pool = FALLBACK_QUESTIONS.filter((q) => q.subject === subject && q.track === track);
+  return [...pool].sort(() => Math.random() - 0.5).slice(0, n).map(shuffleOptions);
+}
+function formatVND(n) {
+  return (n || 0).toLocaleString('vi-VN') + 'đ';
+}
+
+// ===== UI HELPERS =====
+function showToast(message, type = 'info', duration = 2500) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const colors = {
+    success:'bg-mint text-white', error:'bg-coral text-white',
+    warning:'bg-sunny text-brand-900', info:'bg-brand-500 text-white',
+  };
+  const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+  const toast = document.createElement('div');
+  toast.className = `toast ${colors[type]} font-bold px-5 py-3 rounded-2xl shadow-2xl text-sm max-w-xs text-center`;
+  toast.textContent = `${icons[type]} ${message}`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.transition = 'opacity 0.3s, transform 0.3s';
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-20px)';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+function playSound(type = 'click') {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const playTone = (freq, start, duration, wave = 'sine', volume = 0.15) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = wave;
+      osc.frequency.setValueAtTime(freq, now + start);
+      gain.gain.setValueAtTime(volume, now + start);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + start + duration);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now + start); osc.stop(now + start + duration);
+    };
+    if (type === 'click') playTone(600, 0, 0.08, 'sine', 0.08);
+    else if (type === 'tick') playTone(1000, 0, 0.03, 'square', 0.05);
+    else if (type === 'win') [523.25,659.25,783.99,1046.5].forEach((f,i) => playTone(f, i*0.12, 0.2, 'sine', 0.18));
+    else if (type === 'coin') {
+      playTone(1318.5, 0, 0.08, 'sine', 0.15);
+      playTone(1567.98, 0.06, 0.15, 'sine', 0.15);
+    }
+    setTimeout(() => ctx.close(), 2000);
+  } catch (e) {}
+}
+
+function playCorrectSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const playNote = (freq, start, duration, volume = 0.15) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + start);
+      gain.gain.setValueAtTime(volume, now + start);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + start + duration);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now + start); osc.stop(now + start + duration);
+    };
+    playNote(1046.5, 0, 0.15, 0.2);
+    playNote(1318.5, 0.12, 0.25, 0.2);
+    playNote(2093, 0, 0.1, 0.08);
+    playNote(2637, 0.12, 0.15, 0.08);
+    setTimeout(() => ctx.close(), 1500);
+  } catch (e) {}
+}
+
+function playWrongSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(120, now + 0.45);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1200, now);
+    filter.frequency.exponentialRampToValueAtTime(400, now + 0.45);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.setValueAtTime(0.18, now + 0.35);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+    osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 0.5);
+    setTimeout(() => ctx.close(), 1000);
+  } catch (e) {}
+}
+
+function fireConfetti(count = 30) {
+  const colors = ['#FCD34D','#FB7185','#34D399','#38BDF8','#A78BFA','#F472B6'];
+  for (let i = 0; i < count; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDelay = Math.random() * 0.5 + 's';
+    c.style.animationDuration = 2 + Math.random() * 1.5 + 's';
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+function showConfirm(title, message, okText = 'Đồng ý', cancelText = 'Hủy') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+    overlay.innerHTML = `
+      <div class="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full text-center animate-pop">
+        <div class="text-5xl mb-3">🤔</div>
+        <h3 class="font-baloo text-2xl font-bold text-brand-700 mb-2">${title}</h3>
+        <p class="text-brand-600 mb-6">${message}</p>
+        <div class="grid grid-cols-2 gap-3">
+          <button id="confirm-cancel" class="bg-gray-200 text-gray-700 font-bold py-3 rounded-2xl hover:bg-gray-300 transition">${cancelText}</button>
+          <button id="confirm-ok" class="bg-gradient-to-r from-brand-500 to-brand-700 text-white font-bold py-3 rounded-2xl hover:scale-105 transition">${okText}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const cleanup = (result) => {
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.2s';
+      setTimeout(() => overlay.remove(), 200);
+      resolve(result);
+    };
+    overlay.querySelector('#confirm-ok').addEventListener('click', () => { playSound('click'); cleanup(true); });
+    overlay.querySelector('#confirm-cancel').addEventListener('click', () => { playSound('click'); cleanup(false); });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+  });
+}
+
+function showRewardPopup(title, message, okText = 'Quay ngay', cancelText = 'Để sau') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4';
+    overlay.innerHTML = `
+      <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center animate-pop border-4 border-sunny">
+        <div class="text-7xl mb-3 animate-bounce-slow">🎉</div>
+        <h3 class="font-baloo text-3xl font-bold text-sunny mb-3">${title}</h3>
+        <p class="text-brand-700 font-bold mb-6 text-lg">${message}</p>
+        <div class="grid grid-cols-2 gap-3">
+          <button id="rw-cancel" class="bg-gray-200 text-gray-700 font-bold py-3 rounded-2xl">${cancelText}</button>
+          <button id="rw-ok" class="bg-gradient-to-r from-sunny to-coral text-white font-bold py-3 rounded-2xl shadow-lg hover:scale-105 transition">${okText}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const cleanup = (result) => {
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.2s';
+      setTimeout(() => overlay.remove(), 200);
+      resolve(result);
+    };
+    overlay.querySelector('#rw-ok').addEventListener('click', () => { playSound('coin'); cleanup(true); });
+    overlay.querySelector('#rw-cancel').addEventListener('click', () => { playSound('click'); cleanup(false); });
+  });
+}
+
+function renderNavBar({ showBack = true, showHome = true }) {
+  return `
+    <div class="fixed top-4 left-4 right-4 flex justify-between z-30 pointer-events-none">
+      <div class="pointer-events-auto">${showBack ? '<button id="nav-back" class="nav-back-btn">⬅️ Quay lại</button>' : ''}</div>
+      <div class="pointer-events-auto">${showHome ? '<button id="nav-home" class="nav-home-btn">🏠 Trang chủ</button>' : ''}</div>
+    </div>`;
+}
+
+function attachNavEvents({ onBack, onHome }) {
+  setTimeout(() => {
+    const backBtn = document.getElementById('nav-back');
+    const homeBtn = document.getElementById('nav-home');
+    if (backBtn && onBack) backBtn.addEventListener('click', () => { playSound('click'); onBack(); });
+    if (homeBtn && onHome) homeBtn.addEventListener('click', () => { playSound('click'); onHome(); });
+  }, 0);
+}
+
+// ===== STATE =====
+const state = {
+  currentUser: null,
+  selectedRole: 'student',
+  currentRound: null,
+  isOnline: false,
+  subjects: [],
+  tracks: [],
+  selectedSubject: null,
+  selectedTrack: null,
+  userStatus: null, // từ getUserStatus
+};// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('[App] Vui Học v3.0 🚀');
+  renderLoginScreen();
+  checkAPIConnection();
+});
+
+async function checkAPIConnection() {
+  try {
+    await apiCall('ping');
+    state.isOnline = true;
+    const el = document.getElementById('connection-status');
+    if (el) el.textContent = '🟢 Đã kết nối Google Sheets';
+  } catch (err) {
+    state.isOnline = false;
+    const el = document.getElementById('connection-status');
+    if (el) el.textContent = '🟡 Offline (dùng dữ liệu demo)';
+  }
+}
+
+// ===== LOGIN =====
+function renderLoginScreen() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <section class="flex-1 flex items-center justify-center p-4">
+      <div class="w-full max-w-md">
+        <div class="text-center mb-6">
+          <div class="inline-block relative">
+            <div class="text-8xl animate-bounce-slow select-none">🤖</div>
+            <div class="absolute -top-2 -right-2 text-3xl animate-wiggle">✨</div>
+          </div>
+          <h1 class="font-baloo text-4xl font-extrabold text-brand-700 mt-3">Vui Học</h1>
+          <p class="font-nunito text-brand-600 mt-1">Đấu trường kiến thức cho bé 🎯</p>
+        </div>
+
+        <div class="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 border-4 border-white">
+          <h2 class="font-baloo text-2xl font-bold text-brand-700 text-center mb-5">Đăng nhập 👋</h2>
+
+          <div class="mb-5">
+            <label class="block font-bold text-brand-700 mb-2 text-sm">Bạn là:</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button type="button" data-role="student" class="role-btn role-active rounded-2xl py-3 font-bold text-lg transition-all border-4 border-brand-500 bg-brand-500 text-white shadow-lg">🎓 Học sinh</button>
+              <button type="button" data-role="parent" class="role-btn rounded-2xl py-3 font-bold text-lg transition-all border-4 border-brand-200 bg-white text-brand-600">👨‍👩‍👧 Phụ huynh</button>
+            </div>
+            <input type="hidden" id="role-input" value="student" />
+          </div>
+
+          <div class="mb-4">
+            <label class="block font-bold text-brand-700 mb-2 text-sm">Tên đăng nhập:</label>
+            <input type="text" id="username-input" placeholder="Ví dụ: minh" class="w-full px-4 py-3 rounded-2xl border-4 border-brand-200 focus:border-brand-500 focus:outline-none font-nunito text-lg bg-brand-50/50" />
+          </div>
+
+          <div class="mb-5">
+            <label class="block font-bold text-brand-700 mb-2 text-sm">Mật khẩu:</label>
+            <div class="relative">
+              <input type="password" id="password-input" placeholder="••••••" class="w-full px-4 py-3 rounded-2xl border-4 border-brand-200 focus:border-brand-500 focus:outline-none font-nunito text-lg bg-brand-50/50 pr-12" />
+              <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-2xl hover:scale-110 transition-transform">👁️</button>
+            </div>
+          </div>
+
+          <div id="login-error" class="hidden mb-4 p-3 rounded-2xl bg-coral/20 border-2 border-coral text-coral font-bold text-center text-sm">
+            ⚠️ <span id="login-error-text">Sai tên hoặc mật khẩu!</span>
+          </div>
+
+          <button type="button" id="login-btn" class="w-full bg-gradient-to-r from-brand-500 to-brand-700 text-white font-baloo font-bold text-xl py-4 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-95 transition-all">
+            <span id="login-btn-text">🚀 Vào chơi!</span>
+          </button>
+
+          <p class="text-center text-xs text-brand-500 mt-4">
+            💡 Demo: <code class="bg-brand-100 px-1 rounded">minh / 1234</code> •
+            <code class="bg-brand-100 px-1 rounded">bome / 1234</code> •
+            <code class="bg-brand-100 px-1 rounded">admin / 1234</code>
+          </p>
+        </div>
+
+        <p class="text-center text-xs text-brand-500 mt-4">
+          Phiên bản 3.0 • <span id="connection-status">Đang kiểm tra...</span>
+        </p>
+      </div>
+    </section>`;
+  initLoginEvents();
+}
+
+function initLoginEvents() {
+  const roleBtns = document.querySelectorAll('.role-btn');
+  const roleInput = document.getElementById('role-input');
+  const togglePwd = document.getElementById('toggle-password');
+  const pwdInput = document.getElementById('password-input');
+  const loginBtn = document.getElementById('login-btn');
+  const loginBtnText = document.getElementById('login-btn-text');
+  const errorBox = document.getElementById('login-error');
+  const errorText = document.getElementById('login-error-text');
+
+  roleBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      playSound('click');
+      roleBtns.forEach((b) => {
+        b.classList.remove('role-active','bg-brand-500','text-white','border-brand-500');
+        b.classList.add('bg-white','text-brand-600','border-brand-200');
+      });
+      btn.classList.add('role-active','bg-brand-500','text-white','border-brand-500');
+      btn.classList.remove('bg-white','text-brand-600','border-brand-200');
+      state.selectedRole = btn.dataset.role;
+      roleInput.value = btn.dataset.role;
+      errorBox.classList.add('hidden');
+    });
+  });
+
+  togglePwd.addEventListener('click', () => {
+    playSound('click');
+    const isPwd = pwdInput.type === 'password';
+    pwdInput.type = isPwd ? 'text' : 'password';
+    togglePwd.textContent = isPwd ? '🙈' : '👁️';
+  });
+
+  loginBtn.addEventListener('click', handleLogin);
+  [document.getElementById('username-input'), pwdInput].forEach((el) => {
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
+  });
+
+  async function handleLogin() {
+    const username = document.getElementById('username-input').value.trim().toLowerCase();
+    const password = pwdInput.value.trim();
+    const role = state.selectedRole;
+    errorBox.classList.add('hidden');
+
+    if (!username || !password) {
+      errorText.textContent = 'Vui lòng nhập đầy đủ!';
+      errorBox.classList.remove('hidden');
+      playSound('click');
+      return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtnText.innerHTML = '<div class="spinner" style="width:24px;height:24px;border-width:3px;"></div>';
+
+    let user = null;
+    try {
+      if (state.isOnline) {
+        const data = await apiCall('login', { username, password });
+        if (data.user) user = data.user;
+      }
+    } catch (err) { console.warn('[Login]', err); }
+
+    if (!user) {
+      const localUser = FALLBACK_USERS.find((u) => u.username === username && u.password === password);
+      if (localUser) { const { password: _, ...rest } = localUser; user = rest; }
+    }
+
+    loginBtn.disabled = false;
+    loginBtnText.textContent = '🚀 Vào chơi!';
+
+    if (!user) {
+      errorText.textContent = 'Sai tên hoặc mật khẩu!';
+      errorBox.classList.remove('hidden');
+      playSound('click');
+      return;
+    }
+    if (user.role !== 'admin' && user.role !== role) {
+      errorText.textContent = `Tài khoản này là "${user.role}"!`;
+      errorBox.classList.remove('hidden');
+      playSound('click');
+      return;
+    }
+
+    playSound('win');
+    state.currentUser = user;
+    showToast(`Chào ${user.display_name}! 🎉`, 'success');
+
+    // Claim daily login bonus nếu là student
+    if (user.role === 'student' && state.isOnline) {
+      try {
+        const bonus = await apiCall('claimDailyLogin', { user_id: user.id }, 'POST');
+        if (bonus && !bonus.alreadyClaimed && bonus.bonus > 0) {
+          setTimeout(() => {
+            showToast(`🎁 Nhận ${formatVND(bonus.bonus)} đăng nhập hôm nay!`, 'success', 4000);
+            playSound('coin');
+          }, 800);
+        }
+      } catch (err) { console.warn('[Daily]', err); }
+    }
+
+    setTimeout(async () => {
+      if (user.role === 'student') {
+        await loadUserStatus();
+        renderStudentHome();
+      }
+      else if (user.role === 'parent') renderParentHome();
+      else renderAdminHome();
+    }, 500);
+  }
+}
+
+// ===== LOAD USER STATUS =====
+async function loadUserStatus() {
+  if (!state.currentUser || !state.isOnline) return null;
+  try {
+    const status = await apiCall('getUserStatus', { user_id: state.currentUser.id });
+    if (status && !status.error) {
+      state.userStatus = status;
+      return status;
+    }
+  } catch (err) { console.warn('[Status]', err); }
+  return null;
+}
+
+// ===== STUDENT HOME =====
+async function renderStudentHome() {
+  const u = state.currentUser;
+  const app = document.getElementById('app');
+
+  // Refresh status
+  await loadUserStatus();
+  const s = state.userStatus || {};
+
+  const totalScore = s.total_score || u.total_score || 0;
+  const streakCount = s.streak_count || 0;
+  const streakScore = s.streak_score || 0;
+  const todayRounds = s.today_rounds || 0;
+  const pendingStreak = s.pending_streak || 0;
+  const pendingDaily = s.pending_daily || 0;
+  const warehouseValue = s.warehouse_value || 0;
+  const warehouseCount = s.warehouse_count || 0;
+  const totalPending = pendingStreak + pendingDaily;
+
+  // Điểm streak progress bar (tối đa 5 vòng)
+  const streakPct = Math.min((streakCount / 5) * 100, 100);
+  const scorePct = Math.min((streakScore / 45) * 100, 100);
+  const todayPct = Math.min((todayRounds / 30) * 100, 100);
+
+  app.innerHTML = `
+    ${renderNavBar({ showBack: false, showHome: false })}
+    <section class="flex-1 p-4 pt-6">
+      <div class="max-w-2xl mx-auto w-full">
+
+        <!-- Chào -->
+        <div class="bg-white/90 rounded-3xl shadow-2xl p-6 mb-4 text-center">
+          <div class="text-6xl mb-2">🎓</div>
+          <h2 class="font-baloo text-3xl font-bold text-brand-700">Chào ${u.display_name}!</h2>
+          <p class="text-brand-500 mt-1">Điểm tổng: <span class="font-bold text-sunny text-xl">⭐ ${totalScore}</span></p>
+          <p class="text-xs text-brand-500 mt-1">${state.isOnline ? '🟢 Online' : '🟡 Offline'}</p>
+        </div>
+
+        <!-- Pending rewards banner -->
+        ${totalPending > 0 ? `
+          <div class="bg-gradient-to-r from-sunny to-coral rounded-3xl shadow-2xl p-5 mb-4 text-white text-center animate-pop cursor-pointer" onclick="renderSpinSelection()">
+            <div class="text-4xl mb-1">🎰</div>
+            <div class="font-baloo text-2xl font-bold">${totalPending} lượt quay đang chờ!</div>
+            <div class="text-sm mt-1">Bấm để quay ngay 🎉</div>
+          </div>
+        ` : ''}
+
+        <!-- Tiến trình thưởng -->
+        <div class="bg-white/90 rounded-3xl shadow-lg p-5 mb-4">
+          <h3 class="font-baloo text-lg font-bold text-brand-700 mb-3">📊 Tiến trình thưởng</h3>
+
+          <!-- Streak -->
+          <div class="mb-3">
+            <div class="flex justify-between text-sm font-bold text-brand-700 mb-1">
+              <span>🔥 Streak 5 vòng</span>
+              <span>${streakCount}/5 vòng • ${streakScore}/45 điểm</span>
+            </div>
+            <div class="w-full bg-brand-100 rounded-full h-3 overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-coral to-sunny" style="width: ${Math.min(streakPct, scorePct)}%"></div>
+            </div>
+          </div>
+
+          <!-- Today rounds -->
+          <div>
+            <div class="flex justify-between text-sm font-bold text-brand-700 mb-1">
+              <span>📅 Vòng hôm nay</span>
+              <span>${todayRounds}/30 vòng</span>
+            </div>
+            <div class="w-full bg-brand-100 rounded-full h-3 overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-mint to-sky" style="width: ${todayPct}%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nút hành động -->
+        <div class="grid grid-cols-1 gap-3">
+          <button id="btn-play" class="bg-gradient-to-r from-brand-500 to-brand-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:scale-105 transition text-lg">
+            🎮 Chơi ngay
+          </button>
+          <div class="grid grid-cols-2 gap-3">
+            <button id="btn-warehouse" class="bg-white border-4 border-sunny text-sunny font-bold py-3 rounded-2xl shadow-lg hover:bg-sunny/10 transition">
+              🎁 Kho quà (${warehouseCount})
+            </button>
+            <button id="btn-spin" class="bg-white border-4 border-coral text-coral font-bold py-3 rounded-2xl shadow-lg hover:bg-coral/10 transition">
+              🎰 Quay (${totalPending})
+            </button>
+          </div>
+          <button id="btn-logout" class="bg-coral text-white font-bold py-3 rounded-2xl mt-2">🚪 Đăng xuất</button>
+        </div>
+
+        <p class="text-center text-xs text-brand-500 mt-4">
+          💰 Kho quà: <b>${formatVND(warehouseValue)}</b>
+        </p>
+      </div>
+    </section>`;
+
+  document.getElementById('btn-play').addEventListener('click', () => { playSound('click'); renderSubjectScreen(); });
+  document.getElementById('btn-warehouse').addEventListener('click', () => { playSound('click'); renderWarehouseScreen(); });
+  document.getElementById('btn-spin').addEventListener('click', () => { playSound('click'); renderSpinSelection(); });
+  document.getElementById('btn-logout').addEventListener('click', logout);
+}
+
+// ===== CHỌN MÔN =====
+async function renderSubjectScreen() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderNavBar({ showBack: true, showHome: true })}
+    <section class="flex-1 flex items-center justify-center p-4 pt-20">
+      <div class="max-w-2xl w-full bg-white/90 rounded-3xl shadow-2xl p-6">
+        <h2 class="font-baloo text-3xl font-bold text-brand-700 text-center mb-2">Chọn môn 📚</h2>
+        <p class="text-brand-500 text-center mb-6">Bé muốn học môn gì hôm nay?</p>
+        <div id="subjects-list" class="grid gap-3"><div class="spinner"></div></div>
+      </div>
+    </section>`;
+  attachNavEvents({
+    onBack: () => { renderStudentHome(); },
+    onHome: () => { renderStudentHome(); },
+  });
+
+  let subjects = [];
+  try {
+    if (state.isOnline) {
+      const data = await apiCall('getSubjects');
+      subjects = data || [];
+    }
+  } catch (err) { console.warn('[Subjects]', err); }
+  if (!subjects.length) subjects = FALLBACK_SUBJECTS;
+  state.subjects = subjects;
+
+  const list = document.getElementById('subjects-list');
+  if (!list) return;
+  const icons = { toan:'🧮', toan_en:'🇬🇧', en:'📚', tin:'💻' };
+  list.innerHTML = subjects.map((s) => `
+    <button data-subject-id="${s.id}" class="subject-btn bg-white hover:bg-brand-50 border-4 border-brand-200 hover:border-brand-500 rounded-3xl p-5 text-left transition-all hover:scale-[1.02] shadow-md">
+      <div class="flex items-center gap-4">
+        <div class="text-4xl">${icons[s.id] || '📖'}</div>
+        <div class="flex-1">
+          <div class="font-baloo text-xl font-bold text-brand-700">${s.name}</div>
+          <div class="text-sm text-brand-500">${s.description || ''}</div>
+        </div>
+        <div class="text-2xl text-brand-400">➡️</div>
+      </div>
+    </button>`).join('');
+
+  list.querySelectorAll('.subject-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      playSound('click');
+      state.selectedSubject = subjects.find((s) => s.id === btn.dataset.subjectId);
+      renderTrackScreen();
+    });
+  });
+}
+
+// ===== CHỌN TRACK =====
+async function renderTrackScreen() {
+  const subject = state.selectedSubject;
+  if (!subject) return renderSubjectScreen();
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderNavBar({ showBack: true, showHome: true })}
+    <section class="flex-1 flex items-center justify-center p-4 pt-20">
+      <div class="max-w-2xl w-full bg-white/90 rounded-3xl shadow-2xl p-6">
+        <div class="text-center mb-6">
+          <div class="text-sm text-brand-500 mb-1">Môn: ${subject.name}</div>
+          <h2 class="font-baloo text-3xl font-bold text-brand-700">Chọn loại hình 🎯</h2>
+        </div>
+        <div id="tracks-list" class="grid gap-3"><div class="spinner"></div></div>
+      </div>
+    </section>`;
+  attachNavEvents({
+    onBack: () => { renderSubjectScreen(); },
+    onHome: () => { renderStudentHome(); },
+  });
+
+  let tracks = [];
+  try {
+    if (state.isOnline) {
+      const data = await apiCall('getTracks', { subject: subject.id });
+      tracks = data || [];
+    }
+  } catch (err) { console.warn('[Tracks]', err); }
+  if (!tracks.length) tracks = FALLBACK_TRACKS[subject.id] || [];
+  state.tracks = tracks;
+
+  const list = document.getElementById('tracks-list');
+  if (!list) return;
+  if (tracks.length === 0) {
+    list.innerHTML = `<div class="text-center p-6"><div class="text-5xl mb-3">🚧</div><p class="text-brand-500 font-bold">Chưa có loại hình</p></div>`;
+    return;
+  }
+
+  const trackIcons = { vio4:'🏆', sgk4:'📘', nc4:'🚀' };
+  list.innerHTML = tracks.map((t) => `
+    <button data-track-id="${t.id}" class="track-btn bg-white hover:bg-brand-50 border-4 border-brand-200 hover:border-brand-500 rounded-3xl p-5 text-left transition-all hover:scale-[1.02] shadow-md">
+      <div class="flex items-center gap-4">
+        <div class="text-4xl">${trackIcons[t.id] || '📄'}</div>
+        <div class="flex-1">
+          <div class="font-baloo text-xl font-bold text-brand-700">${t.name}</div>
+          <div class="text-sm text-brand-500">${t.description || ''}</div>
+        </div>
+        <div class="text-2xl text-brand-400">➡️</div>
+      </div>
+    </button>`).join('');
+
+  list.querySelectorAll('.track-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      playSound('click');
+      state.selectedTrack = tracks.find((t) => t.id === btn.dataset.trackId);
+      startRound();
+    });
+  });
+}
+
+// ===== PARENT / ADMIN =====
+function renderParentHome() {
+  const u = state.currentUser;
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <section class="flex-1 flex items-center justify-center p-4">
+      <div class="max-w-2xl w-full bg-white/90 rounded-3xl shadow-2xl p-6 text-center">
+        <div class="text-7xl mb-4">👨‍👩‍👧</div>
+        <h2 class="font-baloo text-3xl font-bold text-brand-700">Xin chào ${u.display_name}!</h2>
+        <p class="text-brand-500 mt-2 mb-6">Dashboard phụ huynh — Phase 4 🚧</p>
+        <button onclick="logout()" class="bg-coral text-white font-bold py-3 px-8 rounded-2xl">🚪 Đăng xuất</button>
+      </div>
+    </section>`;
+}
+
+function renderAdminHome() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <section class="flex-1 flex items-center justify-center p-4">
+      <div class="max-w-2xl w-full bg-white/90 rounded-3xl shadow-2xl p-6 text-center">
+        <div class="text-7xl mb-4">🛠️</div>
+        <h2 class="font-baloo text-3xl font-bold text-brand-700">Admin Dashboard</h2>
+        <p class="text-brand-500 mt-2 mb-6">Phase 6 🚧</p>
+        <button onclick="logout()" class="bg-coral text-white font-bold py-3 px-8 rounded-2xl">🚪 Đăng xuất</button>
+      </div>
+    </section>`;
+}
+
+function logout() {
+  playSound('click');
+  state.currentUser = null;
+  state.currentRound = null;
+  state.selectedSubject = null;
+  state.selectedTrack = null;
+  state.userStatus = null;
+  showToast('Đã đăng xuất', 'info');
+  setTimeout(() => location.reload(), 500);
+}
+
+// ===== QUIZ =====
+async function startRound() {
+  playSound('click');
+  const subject = state.selectedSubject;
+  const track = state.selectedTrack;
+  if (!subject || !track) return;
+
+  const app = document.getElementById('app');
+  app.innerHTML = `<section class="flex-1 flex items-center justify-center p-4"><div class="text-center"><div class="spinner"></div><p class="text-brand-600 font-bold mt-4">Đang tải câu hỏi...</p></div></section>`;
+
+  let questions = [];
+  try {
+    if (state.isOnline) {
+      const data = await apiCall('getQuestions', { subject: subject.id, track: track.id, limit: 10 });
+      questions = (data || []).map((q) => shuffleOptions(q));
+    }
+  } catch (err) { console.warn('[Quiz]', err); }
+  if (!questions || questions.length === 0) questions = getLocalQuestions(subject.id, track.id, 10);
+  if (questions.length === 0) {
+    showToast('Chưa có câu hỏi!', 'warning');
+    renderTrackScreen();
+    return;
+  }
+
+  state.currentRound = {
+    subject, track, questions,
+    answers: new Array(questions.length).fill(null),
+    currentIndex: 0, score: 0,
+    timeLeft: 600, timerId: null, locked: false,
+  };
+  renderQuizScreen();
+  startTimer();
+}
+
+function renderQuizScreen() {
+  const r = state.currentRound;
+  if (!r) return;
+  const q = r.questions[r.currentIndex];
+  const app = document.getElementById('app');
+
+  app.innerHTML = `
+    <section class="flex-1 p-4">
+      <div class="max-w-2xl mx-auto w-full">
+        <div class="bg-white/90 rounded-2xl shadow-lg p-4 mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-brand-700 text-sm">${r.subject.name} • ${r.track.name}</span>
+            <span class="font-bold text-sunny text-lg" id="score-display">⭐ ${r.score}</span>
+          </div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-brand-700">Câu ${r.currentIndex + 1}/${r.questions.length}</span>
+            <span id="timer-text" class="font-bold text-brand-700 text-lg">⏱️ 10:00</span>
+          </div>
+          <div class="w-full bg-brand-100 rounded-full h-3 overflow-hidden mb-3">
+            <div id="timer-bar" class="timer-bar h-full bg-gradient-to-r from-mint to-sky" style="width: 100%"></div>
+          </div>
+          <button id="submit-btn" class="w-full bg-coral hover:bg-coral/90 text-white font-bold py-2 rounded-xl text-sm transition">📤 Nộp bài</button>
+        </div>
+
+        <div class="bg-white/90 rounded-3xl shadow-2xl p-6 mb-4">
+          <p class="font-baloo text-xl font-bold text-brand-700 mb-5 leading-relaxed">${q.question}</p>
+          <div class="grid gap-3" id="options-container">
+            ${q.options.map((opt, i) => `
+              <button class="answer-option w-full text-left px-5 py-4 rounded-2xl border-4 border-brand-200 bg-white font-bold text-lg text-brand-700" data-index="${i}">
+                <span class="inline-block w-8 h-8 rounded-full bg-brand-100 text-brand-700 text-center leading-8 mr-3 font-bold">${String.fromCharCode(65 + i)}</span>
+                <span>${opt}</span>
+              </button>`).join('')}
+          </div>
+        </div>
+
+        <div id="feedback-area" class="hidden mb-4"></div>
+      </div>
+    </section>`;
+
+  if (r.answers[r.currentIndex] !== null) revealAnswer(r.answers[r.currentIndex]);
+  bindQuizEvents();
+  updateTimerUI();
+}
+
+function bindQuizEvents() {
+  const r = state.currentRound;
+  const options = document.querySelectorAll('.answer-option');
+  const submitBtn = document.getElementById('submit-btn');
+  if (!r.locked) {
+    options.forEach((btn) => {
+      btn.addEventListener('click', () => handleAnswer(parseInt(btn.dataset.index)));
+    });
+  }
+  submitBtn.addEventListener('click', confirmSubmit);
+}
+
+function handleAnswer(selectedIdx) {
+  const r = state.currentRound;
+  if (r.locked) return;
+  const q = r.questions[r.currentIndex];
+  r.answers[r.currentIndex] = selectedIdx;
+  r.locked = true;
+
+  if (selectedIdx === q.correct) {
+    playCorrectSound();
+    r.score++;
+    fireConfetti(15);
+  } else {
+    playWrongSound();
+  }
+  revealAnswer(selectedIdx);
+
+  const scoreEl = document.getElementById('score-display');
+  if (scoreEl) scoreEl.textContent = `⭐ ${r.score}`;
+
+  setTimeout(() => {
+    if (r.currentIndex === r.questions.length - 1) {
+      showToast('Đã hết câu! Bấm "Nộp bài"', 'info', 3000);
+    } else {
+      r.currentIndex++;
+      r.locked = false;
+      renderQuizScreen();
+    }
+  }, 1500);
+}
+
+function revealAnswer(selectedIdx) {
+  const r = state.currentRound;
+  const q = r.questions[r.currentIndex];
+  const options = document.querySelectorAll('.answer-option');
+  options.forEach((btn, i) => {
+    btn.classList.add('answer-disabled');
+    if (i === q.correct) btn.classList.add('answer-correct');
+    else if (i === selectedIdx && selectedIdx !== q.correct) btn.classList.add('answer-wrong');
+  });
+
+  const feedbackArea = document.getElementById('feedback-area');
+  if (feedbackArea) {
+    feedbackArea.classList.remove('hidden');
+    if (selectedIdx === q.correct) {
+      feedbackArea.innerHTML = `<div class="bg-mint/20 border-4 border-mint rounded-2xl p-4 text-center animate-pop"><p class="font-baloo text-xl font-bold text-mint">🎉 Chính xác! +1 điểm</p></div>`;
+    } else {
+      feedbackArea.innerHTML = `<div class="bg-coral/20 border-4 border-coral rounded-2xl p-4 text-center animate-pop"><p class="font-baloo text-xl font-bold text-coral">😢 Chưa đúng!</p><p class="text-brand-700 mt-1 font-bold">Đáp án đúng: <span class="text-mint">${String.fromCharCode(65 + q.correct)}. ${q.options[q.correct]}</span></p></div>`;
+    }
+  }
+}
+
+async function confirmSubmit() {
+  const r = state.currentRound;
+  if (!r) return;
+  const answered = r.answers.filter((a) => a !== null).length;
+  const unanswered = r.questions.length - answered;
+  let message = `Bé đã làm ${answered}/${r.questions.length} câu.`;
+  if (unanswered > 0) message += ` Còn ${unanswered} câu chưa trả lời!`;
+  message += ' Bé có chắc muốn nộp bài?';
+  const ok = await showConfirm('Nộp bài?', message, '📤 Nộp', '↩️ Tiếp tục');
+  if (ok) submitRound();
+}
+
+function startTimer() {
+  const r = state.currentRound;
+  if (r.timerId) clearInterval(r.timerId);
+  updateTimerUI();
+  r.timerId = setInterval(() => {
+    r.timeLeft--;
+    updateTimerUI();
+    if (r.timeLeft <= 10 && r.timeLeft > 0) playSound('tick');
+    if (r.timeLeft <= 0) {
+      clearInterval(r.timerId);
+      showToast('Hết giờ! Tự động nộp bài', 'warning');
+      submitRound();
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const r = state.currentRound;
+  if (!r) return;
+  const text = document.getElementById('timer-text');
+  const bar = document.getElementById('timer-bar');
+  if (!text || !bar) return;
+  const min = Math.floor(r.timeLeft / 60);
+  const sec = r.timeLeft % 60;
+  text.textContent = `⏱️ ${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  const pct = (r.timeLeft / 600) * 100;
+  bar.style.width = pct + '%';
+  if (pct < 10) { bar.style.background = '#FB7185'; text.classList.add('text-coral', 'animate-pulse'); }
+  else if (pct < 30) { bar.style.background = '#FCD34D'; text.classList.remove('text-coral', 'animate-pulse'); }
+  else { bar.style.background = 'linear-gradient(to right, #34D399, #38BDF8)'; text.classList.remove('text-coral', 'animate-pulse'); }
+}
+
+async function submitRound() {
+  const r = state.currentRound;
+  if (r.timerId) clearInterval(r.timerId);
+  const score = r.score;
+  const total = r.questions.length;
+
+  if (score >= 7) { playSound('win'); fireConfetti(50); }
+  else if (score >= 4) { playSound('click'); }
+
+  let rewardData = null;
+  if (state.currentUser) {
+    const prevTotal = parseInt(state.currentUser.total_score) || 0;
+    state.currentUser.total_score = prevTotal + score;
+
+    if (state.isOnline) {
+      try {
+        rewardData = await apiCall('saveResult', {
+          user_id: state.currentUser.id,
+          subject_id: r.subject.id,
+          track_id: r.track.id,
+          score, total_questions: total, round_number: 1,
+        }, 'POST');
+      } catch (err) {
+        console.warn('[Save]', err);
+        saveScoreLocal(state.currentUser.username, score);
+      }
+    } else {
+      saveScoreLocal(state.currentUser.username, score);
+    }
+  }
+
+  setTimeout(() => renderResultScreen(score, total, rewardData), 300);
+}
+
+function saveScoreLocal(username, score) {
+  try {
+    const key = 'vuihoc_scores';
+    const data = JSON.parse(localStorage.getItem(key) || '{}');
+    if (!data[username]) data[username] = { total: 0, history: [] };
+    data[username].total += score;
+    data[username].history.push({ score, at: new Date().toISOString() });
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {}
+}
+
+function renderResultScreen(score, total, rewardData) {
+  const r = state.currentRound;
+  const app = document.getElementById('app');
+  const pct = (score / total) * 100;
+  let emoji, msg, color;
+  if (pct >= 90) { emoji = '🏆'; msg = 'Xuất sắc!'; color = 'text-sunny'; }
+  else if (pct >= 70) { emoji = '🎉'; msg = 'Giỏi lắm!'; color = 'text-mint'; }
+  else if (pct >= 50) { emoji = '👍'; msg = 'Cố gắng thêm!'; color = 'text-sky'; }
+  else { emoji = '💪'; msg = 'Thử lại nhé!'; color = 'text-coral'; }
+
+  const hasReward = rewardData && (rewardData.streakRewardTriggered || rewardData.dailyRewardTriggered);
+
+  app.innerHTML = `
+    ${renderNavBar({ showBack: true, showHome: true })}
+    <section class="flex-1 flex items-center justify-center p-4 pt-20">
+      <div class="max-w-md w-full bg-white/90 rounded-3xl shadow-2xl p-8 text-center">
+        <div class="text-8xl mb-3 animate-bounce-slow">${emoji}</div>
+        <h2 class="font-baloo text-3xl font-bold ${color} mb-2">${msg}</h2>
+        <p class="text-brand-500 mb-6">${r.subject.name} • ${r.track.name}</p>
+        <div class="bg-gradient-to-br from-brand-50 to-sky-50 rounded-3xl p-6 mb-6">
+          <div class="text-6xl font-baloo font-extrabold text-brand-700">${score}<span class="text-3xl text-brand-400">/${total}</span></div>
+          <p class="text-brand-500 mt-2">câu đúng</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <button id="btn-replay" class="bg-gradient-to-r from-brand-500 to-brand-700 text-white font-bold py-3 rounded-2xl shadow-lg">🔄 Chơi lại</button>
+          <button id="btn-home2" class="bg-white text-brand-600 font-bold py-3 rounded-2xl shadow-lg border-2 border-brand-200">🏠 Trang chủ</button>
+        </div>
+      </div>
+    </section>`;
+
+  attachNavEvents({
+    onBack: () => { renderTrackScreen(); },
+    onHome: () => { renderStudentHome(); },
+  });
+  document.getElementById('btn-replay').addEventListener('click', () => { playSound('click'); startRound(); });
+  document.getElementById('btn-home2').addEventListener('click', () => { playSound('click'); renderStudentHome(); });
+
+  // Nếu có reward trigger → hiện popup
+  if (hasReward) {
+    setTimeout(() => {
+      (async () => {
+        const u = state.currentUser;
+        if (rewardData.streakRewardTriggered) {
+          const go = await showRewardPopup('Chúc mừng ' + u.display_name + '!', 'Bé đã hoàn thành 5 vòng liên tiếp với tổng điểm ' + rewardData.streakScore + '! Bé được <b>1 lượt quay may mắn</b> 🎉', '🎰 Quay ngay', 'Để sau');
+          if (go) renderSpinScreen('streak');
+        } else if (rewardData.dailyRewardTriggered) {
+          const go = await showRewardPopup('Chúc mừng ' + u.display_name + '!', 'Hôm nay bé đã chơi ' + rewardData.todayRounds + ' vòng! Bé được <b>1 lượt quay may mắn daily</b> 🎉', '🎰 Quay ngay', 'Để sau');
+          if (go) renderSpinScreen('daily');
+        }
+      })();
+    }, 1000);
+  }
+}// ============================================
+// VÒNG QUAY MAY MẮN
+// ============================================
+
+// Các mệnh giá hiển thị trên vòng quay
+const STREAK_WHEEL = [
+  { value: 1000, color: '#FCD34D', label: '1K' },
+  { value: 2000, color: '#FB7185', label: '2K' },
+  { value: 3000, color: '#A78BFA', label: '3K' },
+  { value: 5000, color: '#34D399', label: '5K' },
+  { value: 1000, color: '#FCD34D', label: '1K' },
+  { value: 2000, color: '#FB7185', label: '2K' },
+  { value: 3000, color: '#A78BFA', label: '3K' },
+  { value: 1000, color: '#FCD34D', label: '1K' },
+];
+
+const DAILY_WHEEL = [
+  { value: 1000,  color: '#FCD34D', label: '1K' },
+  { value: 2000,  color: '#FB7185', label: '2K' },
+  { value: 5000,  color: '#34D399', label: '5K' },
+  { value: 10000, color: '#38BDF8', label: '10K' },
+  { value: 20000, color: '#A78BFA', label: '20K' },
+  { value: 1000,  color: '#FCD34D', label: '1K' },
+  { value: 2000,  color: '#FB7185', label: '2K' },
+  { value: 5000,  color: '#34D399', label: '5K' },
+];
+
+// Chọn loại quay
+function renderSpinSelection() {
+  const s = state.userStatus || {};
+  const pendingStreak = s.pending_streak || 0;
+  const pendingDaily = s.pending_daily || 0;
+  const total = pendingStreak + pendingDaily;
+
+  const app = document.getElementById('app');
+
+  if (total === 0) {
+    app.innerHTML = `
+      ${renderNavBar({ showBack: true, showHome: true })}
+      <section class="flex-1 flex items-center justify-center p-4 pt-20">
+        <div class="max-w-md w-full bg-white/90 rounded-3xl shadow-2xl p-8 text-center">
+          <div class="text-7xl mb-4">🎰</div>
+          <h2 class="font-baloo text-2xl font-bold text-brand-700 mb-3">Chưa có lượt quay</h2>
+          <p class="text-brand-500 mb-6">Hoàn thành 5 vòng liên tiếp đạt 45+ điểm hoặc chơi 30 vòng/ngày để nhận lượt quay!</p>
+          <button id="btn-back-home" class="bg-gradient-to-r from-brand-500 to-brand-700 text-white font-bold py-3 px-8 rounded-2xl">🏠 Về trang chủ</button>
+        </div>
+      </section>`;
+    attachNavEvents({
+      onBack: () => { renderStudentHome(); },
+      onHome: () => { renderStudentHome(); },
+    });
+    document.getElementById('btn-back-home').addEventListener('click', () => { playSound('click'); renderStudentHome(); });
+    return;
+  }
+
+  app.innerHTML = `
+    ${renderNavBar({ showBack: true, showHome: true })}
+    <section class="flex-1 flex items-center justify-center p-4 pt-20">
+      <div class="max-w-md w-full bg-white/90 rounded-3xl shadow-2xl p-6 text-center">
+        <h2 class="font-baloo text-3xl font-bold text-brand-700 mb-2">Chọn lượt quay 🎰</h2>
+        <p class="text-brand-500 mb-6">Bé có ${total} lượt quay đang chờ</p>
+
+        <div class="grid gap-3">
+          ${pendingStreak > 0 ? `
+            <button id="btn-spin-streak" class="bg-gradient-to-r from-sunny to-coral text-white font-bold py-5 rounded-2xl shadow-lg hover:scale-105 transition">
+              <div class="text-3xl mb-1">🔥</div>
+              <div class="text-lg">Vòng quay STREAK</div>
+              <div class="text-xs opacity-90">${pendingStreak} lượt • Giải: 1K - 5K</div>
+            </button>` : ''}
+          ${pendingDaily > 0 ? `
+            <button id="btn-spin-daily" class="bg-gradient-to-r from-sky to-brand-700 text-white font-bold py-5 rounded-2xl shadow-lg hover:scale-105 transition">
+              <div class="text-3xl mb-1">💎</div>
+              <div class="text-lg">Vòng quay DAILY</div>
+              <div class="text-xs opacity-90">${pendingDaily} lượt • Giải: 1K - 20K</div>
+            </button>` : ''}
+        </div>
+      </div>
+    </section>`;
+
+  attachNavEvents({
+    onBack: () => { renderStudentHome(); },
+    onHome: () => { renderStudentHome(); },
+  });
+
+  if (pendingStreak > 0) {
+    document.getElementById('btn-spin-streak').addEventListener('click', () => { playSound('click'); renderSpinScreen('streak'); });
+  }
+  if (pendingDaily > 0) {
+    document.getElementById('btn-spin-daily').addEventListener('click', () => { playSound('click'); renderSpinScreen('daily'); });
+  }
+}
+
+// Màn hình vòng quay
+function renderSpinScreen(type) {
+  const isStreak = type === 'streak';
+  const wheelData = isStreak ? STREAK_WHEEL : DAILY_WHEEL;
+  const n = wheelData.length;
+  const angle = 360 / n;
+
+  // Tạo SVG conic gradient cho wheel
+  let conicParts = [];
+  wheelData.forEach((item, i) => {
+    const start = i * angle;
+    const end = (i + 1) * angle;
+    conicParts.push(`${item.color} ${start}deg ${end}deg`);
+  });
+  const wheelBg = `conic-gradient(${conicParts.join(', ')})`;
+
+  // Tạo labels
+  let labelsHTML = '';
+  wheelData.forEach((item, i) => {
+    const labelAngle = i * angle + angle / 2;
+    labelsHTML += `
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(${labelAngle}deg) translateY(-100px); color: white; font-weight: 800; font-size: 18px; text-shadow: 0 2px 4px rgba(0,0,0,0.4); pointer-events: none;">
+        ${item.label}
+      </div>`;
+  });
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderNavBar({ showBack: true, showHome: true })}
+    <section class="flex-1 flex items-center justify-center p-4 pt-20">
+      <div class="max-w-md w-full bg-white/90 rounded-3xl shadow-2xl p-6 text-center">
+        <h2 class="font-baloo text-3xl font-bold text-brand-700 mb-1">
+          ${isStreak ? '🔥 Vòng quay STREAK' : '💎 Vòng quay DAILY'}
+        </h2>
+        <p class="text-brand-500 mb-5 text-sm">
+          ${isStreak ? 'Giải thưởng: 1K • 2K • 3K • 5K' : 'Giải thưởng: 1K • 2K • 5K • 10K • 20K'}
+        </p>
+
+        <div class="wheel-container mb-5">
+          <div class="wheel-pointer">🔻</div>
+          <div id="wheel" class="wheel" style="background: ${wheelBg};">
+            <div style="position: absolute; inset: 0;">${labelsHTML}</div>
+          </div>
+          <div class="wheel-center">🎁</div>
+        </div>
+
+        <button id="btn-do-spin" class="w-full bg-gradient-to-r from-sunny to-coral text-white font-baloo font-bold text-xl py-4 rounded-2xl shadow-lg hover:scale-105 transition">
+          🎰 QUAY!
+        </button>
+
+        <div id="spin-result" class="mt-4 hidden"></div>
+      </div>
+    </section>`;
+
+  attachNavEvents({
+    onBack: () => { renderSpinSelection(); },
+    onHome: () => { renderStudentHome(); },
+  });
+
+  let spinning = false;
+  document.getElementById('btn-do-spin').addEventListener('click', async () => {
+    if (spinning) return;
+    spinning = true;
+    const btn = document.getElementById('btn-do-spin');
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang quay...';
+
+    // Gọi API lấy giải
+    let rewardValue = null;
+    try {
+      if (state.isOnline) {
+        const res = await apiCall('spinReward', { user_id: state.currentUser.id, spin_type: type }, 'POST');
+        if (res && res.value) {
+          rewardValue = res.value;
+        } else if (res && res.error) {
+          showToast(res.error, 'error');
+          spinning = false;
+          btn.disabled = false;
+          btn.textContent = '🎰 QUAY!';
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('[Spin]', err);
+      // Fallback: random local
+      const vals = isStreak ? [1000,1000,1000,2000,2000,3000,5000] : [1000,1000,2000,2000,5000,5000,10000,20000];
+      rewardValue = vals[Math.floor(Math.random() * vals.length)];
+    }
+
+    if (!rewardValue) rewardValue = 1000;
+
+    // Tìm vị trí của giải trên wheel
+    let targetIdx = wheelData.findIndex((x) => x.value === rewardValue);
+    if (targetIdx < 0) targetIdx = 0;
+
+    // Tính góc quay để mũi tên chỉ vào targetIdx
+    // Mũi tên ở trên (0deg). Mỗi slice chiếm angle độ.
+    // Để mũi tên chỉ vào slice idx, cần quay wheel sao cho slice đó lên đỉnh.
+    // Góc quay = 360*5 - (idx * angle + angle/2)
+    const targetAngle = 360 * 5 - (targetIdx * angle + angle / 2);
+
+    const wheel = document.getElementById('wheel');
+    wheel.style.transform = `rotate(${targetAngle}deg)`;
+
+    playSound('tick');
+
+    // Sau 4s (khớp transition) → hiện kết quả
+    setTimeout(async () => {
+      playSound('coin');
+      fireConfetti(60);
+
+      // Cập nhật status
+      await loadUserStatus();
+      const s = state.userStatus || {};
+
+      const resultDiv = document.getElementById('spin-result');
+      resultDiv.classList.remove('hidden');
+      resultDiv.innerHTML = `
+        <div class="bg-gradient-to-r from-sunny to-coral rounded-3xl p-6 text-white animate-pop">
+          <div class="text-6xl mb-2">🎉</div>
+          <div class="font-baloo text-2xl font-bold mb-1">Chúc mừng!</div>
+          <div class="text-4xl font-baloo font-extrabold mb-2">${formatVND(rewardValue)}</div>
+          <div class="text-sm opacity-90">Đã thêm vào kho quà</div>
+        </div>
+        <button id="btn-continue" class="w-full mt-4 bg-brand-500 text-white font-bold py-3 rounded-2xl">Tiếp tục</button>
+      `;
+      document.getElementById('btn-continue').addEventListener('click', () => {
+        playSound('click');
+        renderStudentHome();
+      });
+
+      btn.textContent = '✅ Đã nhận quà';
+    }, 4200);
+  });
+}
+
+// ============================================
+// KHO QUÀ
+// ============================================
+async function renderWarehouseScreen() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderNavBar({ showBack: true, showHome: true })}
+    <section class="flex-1 p-4 pt-20">
+      <div class="max-w-2xl mx-auto w-full bg-white/90 rounded-3xl shadow-2xl p-6">
+        <h2 class="font-baloo text-3xl font-bold text-brand-700 text-center mb-2">🎁 Kho quà</h2>
+        <p class="text-brand-500 text-center mb-6">Những phần quà bé đã nhận được</p>
+        <div id="warehouse-list"><div class="spinner"></div></div>
+      </div>
+    </section>`;
+  attachNavEvents({
+    onBack: () => { renderStudentHome(); },
+    onHome: () => { renderStudentHome(); },
+  });
+
+  // Load rewards
+  let rewards = [];
+  try {
+    if (state.isOnline) {
+      const data = await apiCall('getUserRewards', { user_id: state.currentUser.id });
+      rewards = data || [];
+    }
+  } catch (err) { console.warn('[Warehouse]', err); }
+
+  const list = document.getElementById('warehouse-list');
+  if (!list) return;
+
+  if (rewards.length === 0) {
+    list.innerHTML = `
+      <div class="text-center p-8">
+        <div class="text-6xl mb-3">📭</div>
+        <p class="text-brand-500 font-bold mb-4">Kho quà đang trống</p>
+        <p class="text-brand-400 text-sm mb-6">Chơi game để nhận phần thưởng nhé!</p>
+        <button id="btn-go-play" class="bg-gradient-to-r from-brand-500 to-brand-700 text-white font-bold py-3 px-8 rounded-2xl">🎮 Chơi ngay</button>
+      </div>`;
+    document.getElementById('btn-go-play').addEventListener('click', () => { playSound('click'); renderSubjectScreen(); });
+    return;
+  }
+
+  const sourceLabel = {
+    daily_login: '📅 Đăng nhập ngày',
+    streak_5: '🔥 Streak 5 vòng',
+    daily_30: '💎 30 vòng/ngày',
+    manual: '🎁 Thủ công',
+  };
+
+  const totalValue = rewards.reduce((s, r) => s + (parseInt(r.value) || 0), 0);
+
+  list.innerHTML = `
+    <div class="bg-gradient-to-r from-sunny to-coral rounded-3xl p-5 text-white mb-5 text-center">
+      <div class="text-sm opacity-90">Tổng giá trị kho</div>
+      <div class="font-baloo text-4xl font-extrabold">${formatVND(totalValue)}</div>
+      <div class="text-sm opacity-90 mt-1">${rewards.length} phần quà</div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      ${rewards.map((r) => `
+        <div class="reward-card">
+          <div>
+            <div class="text-xs opacity-90">${sourceLabel[r.source] || '🎁 Quà'}</div>
+            <div class="text-lg font-baloo">${formatVND(parseInt(r.value))}</div>
+          </div>
+          <div class="text-2xl">🎫</div>
+        </div>`).join('')}
+    </div>
+
+    <button id="btn-redeem" class="w-full bg-gradient-to-r from-mint to-sky text-white font-bold py-4 rounded-2xl shadow-lg hover:scale-105 transition">
+      💸 Yêu cầu đổi thành tiền
+    </button>
+    <p class="text-xs text-brand-500 text-center mt-3">
+      Khi đổi, phụ huynh sẽ nhận được yêu cầu xác nhận
+    </p>`;
+
+  document.getElementById('btn-redeem').addEventListener('click', () => {
+    playSound('click');
+    showToast('Tính năng đổi quà sẽ có ở Phase 4!', 'info', 3000);
+  });
+}
+
+// ============================================
+// EXPORTS
+// ============================================
+// ============================================
+// PATCH v3.1 — TỐI ƯU TỐC ĐỘ
+// ============================================
+
+// ===== CACHE HELPERS =====
+function cacheGet(key, ttl) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (ttl && Date.now() - obj.ts > ttl) return null;
+    return obj.data;
+  } catch (e) { return null; }
+}
+function cacheSet(key, data) {
+  try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
+}
+function cacheDel(key) {
+  try { localStorage.removeItem(key); } catch (e) {}
+}
+const TTL_QUESTIONS = 24 * 60 * 60 * 1000; // 24h
+const TTL_STATUS = 30 * 1000;              // 30s
+
+// ===== OVERRIDE loadUserStatus — cache 30s =====
+async function loadUserStatus() {
+  if (!state.currentUser || !state.isOnline) return null;
+  const uid = state.currentUser.id;
+  const cached = cacheGet(`vuihoc_status_${uid}`, TTL_STATUS);
+  if (cached) { state.userStatus = cached; return cached; }
+  try {
+    const status = await apiCall('getUserStatus', { user_id: uid });
+    if (status && !status.error) {
+      state.userStatus = status;
+      cacheSet(`vuihoc_status_${uid}`, status);
+      return status;
+    }
+  } catch (err) { console.warn('[Status]', err); }
+  return state.userStatus;
+}
+function invalidateUserStatus() {
+  if (state.currentUser) cacheDel(`vuihoc_status_${state.currentUser.id}`);
+}
+
+// ===== OVERRIDE startRound — cache câu hỏi =====
+async function startRound() {
+  playSound('click');
+  const subject = state.selectedSubject;
+  const track = state.selectedTrack;
+  if (!subject || !track) return;
+
+  const app = document.getElementById('app');
+  app.innerHTML = `<section class="flex-1 flex items-center justify-center p-4"><div class="text-center"><div class="spinner"></div><p class="text-brand-600 font-bold mt-4">Đang tải câu hỏi...</p></div></section>`;
+
+  const cacheKey = `vuihoc_questions_${subject.id}_${track.id}`;
+  let pool = cacheGet(cacheKey, TTL_QUESTIONS);
+
+  if (!pool) {
+    try {
+      if (state.isOnline) {
+        const data = await apiCall('getQuestions', { subject: subject.id, track: track.id, limit: 500 });
+        pool = (data || []).map((q) => shuffleOptions(q));
+        if (pool.length > 0) cacheSet(cacheKey, pool);
+      }
+    } catch (err) { console.warn('[Quiz]', err); }
+  }
+
+  if (!pool || pool.length === 0) pool = getLocalQuestions(subject.id, track.id, 10);
+  if (pool.length === 0) {
+    showToast('Chưa có câu hỏi!', 'warning');
+    renderTrackScreen();
+    return;
+  }
+
+  const questions = [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(10, pool.length)).map(shuffleOptions);
+
+  state.currentRound = {
+    subject, track, questions,
+    answers: new Array(questions.length).fill(null),
+    currentIndex: 0, score: 0,
+    timeLeft: 600, timerId: null, locked: false,
+    submitted: false,
+  };
+  renderQuizScreen();
+  startTimer();
+}
+
+// ===== OVERRIDE submitRound — hiện kết quả NGAY =====
+async function submitRound() {
+  const r = state.currentRound;
+  if (!r || r.submitted) return;
+  r.submitted = true;
+
+  if (r.timerId) clearInterval(r.timerId);
+  const score = r.score;
+  const total = r.questions.length;
+
+  if (score >= 7) { playSound('win'); fireConfetti(50); }
+  else if (score >= 4) { playSound('click'); }
+
+  if (state.currentUser) {
+    const prev = parseInt(state.currentUser.total_score) || 0;
+    state.currentUser.total_score = prev + score;
+    saveScoreLocal(state.currentUser.username, score);
+    invalidateUserStatus();
+  }
+
+  // Hiện kết quả NGAY
+  renderResultScreen(score, total, null);
+
+  // API chạy ngầm
+  saveResultInBackground(score, total);
+}
+
+async function saveResultInBackground(score, total) {
+  const r = state.currentRound;
+  if (!r || !state.currentUser || !state.isOnline) return;
+  try {
+    const rewardData = await apiCall('saveResult', {
+      user_id: state.currentUser.id,
+      subject_id: r.subject.id,
+      track_id: r.track.id,
+      score, total_questions: total, round_number: 1,
+    }, 'POST');
+    invalidateUserStatus();
+    if (rewardData && (rewardData.streakRewardTriggered || rewardData.dailyRewardTriggered)) {
+      await loadUserStatus();
+      setTimeout(() => handleRewardTrigger(rewardData), 500);
+    }
+  } catch (err) { console.warn('[Save]', err); }
+}
+
+async function handleRewardTrigger(rewardData) {
+  const u = state.currentUser;
+  if (!u) return;
+  if (rewardData.streakRewardTriggered) {
+    const go = await showRewardPopup(
+      'Chúc mừng ' + u.display_name + '!',
+      'Bé đã hoàn thành 5 vòng liên tiếp với tổng điểm ' + rewardData.streakScore + '! Bé được <b>1 lượt quay may mắn</b> 🎉',
+      '🎰 Quay ngay', 'Để sau'
+    );
+    if (go) renderSpinScreen('streak');
+  } else if (rewardData.dailyRewardTriggered) {
+    const go = await showRewardPopup(
+      'Chúc mừng ' + u.display_name + '!',
+      'Hôm nay bé đã chơi ' + rewardData.todayRounds + ' vòng! Bé được <b>1 lượt quay may mắn daily</b> 🎉',
+      '🎰 Quay ngay', 'Để sau'
+    );
+    if (go) renderSpinScreen('daily');
+  }
+}
+
+// ===== OVERRIDE renderResultScreen — bỏ popup cuối =====
+function renderResultScreen(score, total, rewardData) {
+  const r = state.currentRound;
+  const app = document.getElementById('app');
+  const pct = (score / total) * 100;
+  let emoji, msg, color;
+  if (pct >= 90) { emoji = '🏆'; msg = 'Xuất sắc!'; color = 'text-sunny'; }
+  else if (pct >= 70) { emoji = '🎉'; msg = 'Giỏi lắm!'; color = 'text-mint'; }
+  else if (pct >= 50) { emoji = '👍'; msg = 'Cố gắng thêm!'; color = 'text-sky'; }
+  else { emoji = '💪'; msg = 'Thử lại nhé!'; color = 'text-coral'; }
+
+  app.innerHTML = `
+    ${renderNavBar({ showBack: true, showHome: true })}
+    <section class="flex-1 flex items-center justify-center p-4 pt-20">
+      <div class="max-w-md w-full bg-white/90 rounded-3xl shadow-2xl p-8 text-center">
+        <div class="text-8xl mb-3 animate-bounce-slow">${emoji}</div>
+        <h2 class="font-baloo text-3xl font-bold ${color} mb-2">${msg}</h2>
+        <p class="text-brand-500 mb-6">${r.subject.name} • ${r.track.name}</p>
+        <div class="bg-gradient-to-br from-brand-50 to-sky-50 rounded-3xl p-6 mb-6">
+          <div class="text-6xl font-baloo font-extrabold text-brand-700">${score}<span class="text-3xl text-brand-400">/${total}</span></div>
+          <p class="text-brand-500 mt-2">câu đúng</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <button id="btn-replay" class="bg-gradient-to-r from-brand-500 to-brand-700 text-white font-bold py-3 rounded-2xl shadow-lg">🔄 Chơi lại</button>
+          <button id="btn-home2" class="bg-white text-brand-600 font-bold py-3 rounded-2xl shadow-lg border-2 border-brand-200">🏠 Trang chủ</button>
+        </div>
+      </div>
+    </section>`;
+
+  attachNavEvents({
+    onBack: () => { renderTrackScreen(); },
+    onHome: () => { renderStudentHome(); },
+  });
+  document.getElementById('btn-replay').addEventListener('click', () => { playSound('click'); startRound(); });
+  document.getElementById('btn-home2').addEventListener('click', () => { playSound('click'); renderStudentHome(); });
+}
+
+// ===== OVERRIDE initLoginEvents — vào Home ngay, bonus ngầm =====
+function initLoginEvents() {
+  const roleBtns = document.querySelectorAll('.role-btn');
+  const roleInput = document.getElementById('role-input');
+  const togglePwd = document.getElementById('toggle-password');
+  const pwdInput = document.getElementById('password-input');
+  const loginBtn = document.getElementById('login-btn');
+  const loginBtnText = document.getElementById('login-btn-text');
+  const errorBox = document.getElementById('login-error');
+  const errorText = document.getElementById('login-error-text');
+
+  roleBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      playSound('click');
+      roleBtns.forEach((b) => {
+        b.classList.remove('role-active','bg-brand-500','text-white','border-brand-500');
+        b.classList.add('bg-white','text-brand-600','border-brand-200');
+      });
+      btn.classList.add('role-active','bg-brand-500','text-white','border-brand-500');
+      btn.classList.remove('bg-white','text-brand-600','border-brand-200');
+      state.selectedRole = btn.dataset.role;
+      roleInput.value = btn.dataset.role;
+      errorBox.classList.add('hidden');
+    });
+  });
+
+  togglePwd.addEventListener('click', () => {
+    playSound('click');
+    const isPwd = pwdInput.type === 'password';
+    pwdInput.type = isPwd ? 'text' : 'password';
+    togglePwd.textContent = isPwd ? '🙈' : '👁️';
+  });
+
+  loginBtn.addEventListener('click', doLogin);
+  [document.getElementById('username-input'), pwdInput].forEach((el) => {
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+  });
+
+  async function doLogin() {
+    const username = document.getElementById('username-input').value.trim().toLowerCase();
+    const password = pwdInput.value.trim();
+    const role = state.selectedRole;
+    errorBox.classList.add('hidden');
+
+    if (!username || !password) {
+      errorText.textContent = 'Vui lòng nhập đầy đủ!';
+      errorBox.classList.remove('hidden');
+      playSound('click');
+      return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtnText.innerHTML = '<div class="spinner" style="width:24px;height:24px;border-width:3px;"></div>';
+
+    let user = null;
+    try {
+      if (state.isOnline) {
+        const data = await apiCall('login', { username, password });
+        if (data.user) user = data.user;
+      }
+    } catch (err) { console.warn('[Login]', err); }
+
+    if (!user) {
+      const localUser = FALLBACK_USERS.find((u) => u.username === username && u.password === password);
+      if (localUser) { const { password: _, ...rest } = localUser; user = rest; }
+    }
+
+    loginBtn.disabled = false;
+    loginBtnText.textContent = '🚀 Vào chơi!';
+
+    if (!user) {
+      errorText.textContent = 'Sai tên hoặc mật khẩu!';
+      errorBox.classList.remove('hidden');
+      playSound('click');
+      return;
+    }
+    if (user.role !== 'admin' && user.role !== role) {
+      errorText.textContent = `Tài khoản này là "${user.role}"!`;
+      errorBox.classList.remove('hidden');
+      playSound('click');
+      return;
+    }
+
+    playSound('win');
+    state.currentUser = user;
+    showToast(`Chào ${user.display_name}! 🎉`, 'success');
+
+    // Vào Home NGAY — không đợi API
+    setTimeout(() => {
+      if (user.role === 'student') {
+        renderStudentHome();
+        claimDailyBonusBackground();
+      }
+      else if (user.role === 'parent') renderParentHome();
+      else renderAdminHome();
+    }, 200);
+  }
+}
+
+async function claimDailyBonusBackground() {
+  const user = state.currentUser;
+  if (!user || user.role !== 'student' || !state.isOnline) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const lockKey = `vuihoc_daily_lock_${user.id}_${today}`;
+  if (localStorage.getItem(lockKey)) return;
+  localStorage.setItem(lockKey, '1');
+
+  try {
+    const bonus = await apiCall('claimDailyLogin', { user_id: user.id }, 'POST');
+    if (bonus && !bonus.alreadyClaimed && bonus.bonus > 0) {
+      invalidateUserStatus();
+      setTimeout(async () => {
+        showToast(`🎁 Nhận ${formatVND(bonus.bonus)} đăng nhập hôm nay!`, 'success', 4000);
+        playSound('coin');
+        await loadUserStatus();
+        if (document.getElementById('btn-play')) renderStudentHome();
+      }, 500);
+    }
+  } catch (err) {
+    console.warn('[Daily]', err);
+    localStorage.removeItem(lockKey);
+  }
+}
+
+// ============================================
+// HẾT PATCH
+// ============================================
+// ============================================
+// PATCH v3.3 — CHỌN CHƯƠNG SGK TOÁN 4
+// ============================================
+
+const SGK_CHAPTERS = [
+  { id: 'chuong_1',  name: 'Chương 1: Ôn tập và bổ sung',             icon: '📘' },
+  { id: 'chuong_2',  name: 'Chương 2: Góc và đơn vị đo góc',           icon: '📐' },
+  { id: 'chuong_3',  name: 'Chương 3: Số có nhiều chữ số',             icon: '🔢' },
+  { id: 'chuong_4',  name: 'Chương 4: Đơn vị đo đại lượng',           icon: '⚖️' },
+  { id: 'chuong_5',  name: 'Chương 5: Phép cộng và phép trừ',         icon: '➕' },
+  { id: 'chuong_6',  name: 'Chương 6: Đường thẳng vuông góc, song song', icon: '📏' },
+  { id: 'chuong_7',  name: 'Chương 7: Ôn tập học kì 1',               icon: '📝' },
+  { id: 'chuong_8',  name: 'Chương 8: Phép nhân và phép chia',        icon: '✖️' },
+  { id: 'chuong_9',  name: 'Chương 9: Thống kê, xác suất',            icon: '📊' },
+  { id: 'chuong_10', name: 'Chương 10: Phân số',                      icon: '½' },
+  { id: 'chuong_11', name: 'Chương 11: Cộng trừ phân số',             icon: '➕' },
+  { id: 'chuong_12', name: 'Chương 12: Nhân chia phân số',            icon: '✖️' },
+  { id: 'chuong_13', name: 'Chương 13: Ôn tập cuối năm',              icon: '🏆' },
+];
+
+// ===== OVERRIDE renderTrackScreen =====
+async function renderTrackScreen() {
+  const subject = state.selectedSubject;
+  if (!subject) return renderSubjectScreen();
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderNavBar({ showBack: true, showHome: true })}
+    <section class="flex-1 flex items-center justify-center p-4 pt-20">
+      <div class="max-w-2xl w-full bg-white/90 rounded-3xl shadow-2xl p-6">
+        <div class="text-center mb-6">
+          <div class="text-sm text-brand-500 mb-1">Môn: ${subject.name}</div>
+          <h2 class="font-baloo text-3xl font-bold text-brand-700">Chọn loại hình 🎯</h2>
+        </div>
+        <div id="tracks-list" class="grid gap-3"><div class="spinner"></div></div>
+      </div>
+    </section>`;
+  attachNavEvents({
+    onBack: () => { renderSubjectScreen(); },
+    onHome: () => { renderStudentHome(); },
+  });
+
+  let tracks = [];
+  try {
+    if (state.isOnline) {
+      const data = await apiCall('getTracks', { subject: subject.id });
+      tracks = data || [];
+    }
+  } catch (err) { console.warn('[Tracks]', err); }
+  if (!tracks.length) tracks = FALLBACK_TRACKS[subject.id] || [];
+  state.tracks = tracks;
+
+  const list = document.getElementById('tracks-list');
+  if (!list) return;
+  if (tracks.length === 0) {
+    list.innerHTML = `<div class="text-center p-6"><div class="text-5xl mb-3">🚧</div><p class="text-brand-500 font-bold">Chưa có loại hình</p></div>`;
+    return;
+  }
+
+  const trackIcons = { vio4:'🏆', sgk4:'📘', nc4:'🚀' };
+  list.innerHTML = tracks.map((t) => `
+    <button data-track-id="${t.id}" class="track-btn bg-white hover:bg-brand-50 border-4 border-brand-200 hover:border-brand-500 rounded-3xl p-5 text-left transition-all hover:scale-[1.02] shadow-md">
+      <div class="flex items-center gap-4">
+        <div class="text-4xl">${trackIcons[t.id] || '📄'}</div>
+        <div class="flex-1">
+          <div class="font-baloo text-xl font-bold text-brand-700">${t.name}</div>
+          <div class="text-sm text-brand-500">${t.description || ''}</div>
+        </div>
+        <div class="text-2xl text-brand-400">➡️</div>
+      </div>
+    </button>`).join('');
+
+  list.querySelectorAll('.track-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      playSound('click');
+      const trackId = btn.dataset.trackId;
+      state.selectedTrack = tracks.find((t) => t.id === trackId);
+
+      // Nếu là SGK → chọn chương
+      if (trackId === 'sgk4') {
+        renderChapterScreen();
+      } else {
+        // Violympic → vào thi luôn
+        state.selectedChapter = null;
+        startRound();
+      }
+    });
+  });
+}
+
+// ===== MÀN HÌNH CHỌN CHƯƠNG =====
+function renderChapterScreen() {
+  const subject = state.selectedSubject;
+  const track = state.selectedTrack;
+  const app = document.getElementById('app');
+
+  app.innerHTML = `
+    ${renderNavBar({ showBack: true, showHome: true })}
+    <section class="flex-1 p-4 pt-20">
+      <div class="max-w-2xl mx-auto w-full bg-white/90 rounded-3xl shadow-2xl p-6">
+        <div class="text-center mb-6">
+          <div class="text-sm text-brand-500 mb-1">${subject.name} • ${track.name}</div>
+          <h2 class="font-baloo text-3xl font-bold text-brand-700">Chọn chương 📚</h2>
+          <p class="text-brand-500 mt-1 text-sm">Mỗi chương có 100 câu hỏi</p>
+        </div>
+
+        <!-- Nút ôn tập tổng hợp -->
+        <button id="btn-mixed" class="w-full mb-4 bg-gradient-to-r from-sunny to-coral text-white font-bold py-4 rounded-2xl shadow-lg hover:scale-[1.02] transition">
+          🎲 Ôn tập tổng hợp (10 câu ngẫu nhiên)
+        </button>
+
+        <div id="chapters-list" class="grid gap-2">
+          ${SGK_CHAPTERS.map((c) => `
+            <button data-chapter-id="${c.id}"
+              class="chapter-btn bg-white hover:bg-brand-50 border-2 border-brand-200 hover:border-brand-500 rounded-2xl p-4 text-left transition-all hover:scale-[1.01] shadow-sm">
+              <div class="flex items-center gap-3">
+                <div class="text-2xl w-10 text-center">${c.icon}</div>
+                <div class="flex-1">
+                  <div class="font-bold text-brand-700">${c.name}</div>
+                </div>
+                <div class="text-xl text-brand-400">➡️</div>
+              </div>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    </section>`;
+
+  attachNavEvents({
+    onBack: () => { renderTrackScreen(); },
+    onHome: () => { renderStudentHome(); },
+  });
+
+  document.getElementById('btn-mixed').addEventListener('click', () => {
+    playSound('click');
+    state.selectedChapter = 'mixed';
+    startRound();
+  });
+
+  document.querySelectorAll('.chapter-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      playSound('click');
+      state.selectedChapter = btn.dataset.chapterId;
+      startRound();
+    });
+  });
+}
+
+// ===== OVERRIDE startRound — hỗ trợ chapter =====
+async function startRound() {
+  playSound('click');
+  const subject = state.selectedSubject;
+  const track = state.selectedTrack;
+  const chapter = state.selectedChapter || null;
+  if (!subject || !track) return;
+
+  const app = document.getElementById('app');
+  app.innerHTML = `<section class="flex-1 flex items-center justify-center p-4"><div class="text-center"><div class="spinner"></div><p class="text-brand-600 font-bold mt-4">Đang tải câu hỏi...</p></div></section>`;
+
+  // Cache key phân biệt theo track + chapter
+  const cacheKey = chapter
+    ? `vuihoc_questions_${subject.id}_${track.id}_${chapter}`
+    : `vuihoc_questions_${subject.id}_${track.id}`;
+
+  let pool = cacheGet(cacheKey, TTL_QUESTIONS);
+
+  if (!pool) {
+    try {
+      if (state.isOnline) {
+        const params = { subject: subject.id, track: track.id, limit: 500 };
+        if (chapter && chapter !== 'mixed') {
+          params.chapter = chapter;
+          params.game_type = 'sgk';
+        } else if (chapter === 'mixed') {
+          // Ôn tập tổng hợp: lấy random từ nhiều chương
+          params.game_type = 'sgk';
+        }
+        const data = await apiCall('getQuestions', params);
+        pool = (data || []).map((q) => shuffleOptions(q));
+        if (pool.length > 0) cacheSet(cacheKey, pool);
+      }
+    } catch (err) { console.warn('[Quiz]', err); }
+  }
+
+  if (!pool || pool.length === 0) {
+    pool = getLocalQuestions(subject.id, track.id, 10);
+  }
+  if (pool.length === 0) {
+    showToast('Chưa có câu hỏi cho mục này!', 'warning');
+    renderTrackScreen();
+    return;
+  }
+
+  const questions = [...pool]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, Math.min(10, pool.length))
+    .map(shuffleOptions);
+
+  state.currentRound = {
+    subject, track, chapter, questions,
+    answers: new Array(questions.length).fill(null),
+    currentIndex: 0, score: 0,
+    timeLeft: 600, timerId: null, locked: false,
+    submitted: false,
+  };
+  renderQuizScreen();
+  startTimer();
+}
+
+// ===== OVERRIDE renderQuizScreen — hiện tên chương =====
+function renderQuizScreen() {
+  const r = state.currentRound;
+  if (!r) return;
+  const q = r.questions[r.currentIndex];
+  const app = document.getElementById('app');
+
+  let trackLabel = r.track.name;
+  if (r.chapter && r.chapter !== 'mixed') {
+    const ch = SGK_CHAPTERS.find((c) => c.id === r.chapter);
+    trackLabel = ch ? ch.name : r.track.name;
+  } else if (r.chapter === 'mixed') {
+    trackLabel = 'Ôn tập tổng hợp';
+  }
+
+  app.innerHTML = `
+    <section class="flex-1 p-4">
+      <div class="max-w-2xl mx-auto w-full">
+        <div class="bg-white/90 rounded-2xl shadow-lg p-4 mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-brand-700 text-xs sm:text-sm">${trackLabel}</span>
+            <span class="font-bold text-sunny text-lg" id="score-display">⭐ ${r.score}</span>
+          </div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-brand-700">Câu ${r.currentIndex + 1}/${r.questions.length}</span>
+            <span id="timer-text" class="font-bold text-brand-700 text-lg">⏱️ 10:00</span>
+          </div>
+          <div class="w-full bg-brand-100 rounded-full h-3 overflow-hidden mb-3">
+            <div id="timer-bar" class="timer-bar h-full bg-gradient-to-r from-mint to-sky" style="width: 100%"></div>
+          </div>
+          <button id="submit-btn" class="w-full bg-coral hover:bg-coral/90 text-white font-bold py-2 rounded-xl text-sm transition">📤 Nộp bài</button>
+        </div>
+
+        <div class="bg-white/90 rounded-3xl shadow-2xl p-6 mb-4">
+          <p class="font-baloo text-xl font-bold text-brand-700 mb-5 leading-relaxed">${q.question}</p>
+          <div class="grid gap-3" id="options-container">
+            ${q.options.map((opt, i) => `
+              <button class="answer-option w-full text-left px-5 py-4 rounded-2xl border-4 border-brand-200 bg-white font-bold text-lg text-brand-700" data-index="${i}">
+                <span class="inline-block w-8 h-8 rounded-full bg-brand-100 text-brand-700 text-center leading-8 mr-3 font-bold">${String.fromCharCode(65 + i)}</span>
+                <span>${opt}</span>
+              </button>`).join('')}
+          </div>
+        </div>
+
+        <div id="feedback-area" class="hidden mb-4"></div>
+      </div>
+    </section>`;
+
+  if (r.answers[r.currentIndex] !== null) revealAnswer(r.answers[r.currentIndex]);
+  bindQuizEvents();
+  updateTimerUI();
+}
+
+// ===== OVERRIDE renderResultScreen — nút Chơi lại đúng chương =====
+function renderResultScreen(score, total, rewardData) {
+  const r = state.currentRound;
+  const app = document.getElementById('app');
+  const pct = (score / total) * 100;
+  let emoji, msg, color;
+  if (pct >= 90) { emoji = '🏆'; msg = 'Xuất sắc!'; color = 'text-sunny'; }
+  else if (pct >= 70) { emoji = '🎉'; msg = 'Giỏi lắm!'; color = 'text-mint'; }
+  else if (pct >= 50) { emoji = '👍'; msg = 'Cố gắng thêm!'; color = 'text-sky'; }
+  else { emoji = '💪'; msg = 'Thử lại nhé!'; color = 'text-coral'; }
+
+  let trackLabel = r.track.name;
+  if (r.chapter && r.chapter !== 'mixed') {
+    const ch = SGK_CHAPTERS.find((c) => c.id === r.chapter);
+    trackLabel = ch ? ch.name : r.track.name;
+  } else if (r.chapter === 'mixed') {
+    trackLabel = 'Ôn tập tổng hợp';
+  }
+
+  app.innerHTML = `
+    ${renderNavBar({ showBack: true, showHome: true })}
+    <section class="flex-1 flex items-center justify-center p-4 pt-20">
+      <div class="max-w-md w-full bg-white/90 rounded-3xl shadow-2xl p-8 text-center">
+        <div class="text-8xl mb-3 animate-bounce-slow">${emoji}</div>
+        <h2 class="font-baloo text-3xl font-bold ${color} mb-2">${msg}</h2>
+        <p class="text-brand-500 mb-6">${trackLabel}</p>
+        <div class="bg-gradient-to-br from-brand-50 to-sky-50 rounded-3xl p-6 mb-6">
+          <div class="text-6xl font-baloo font-extrabold text-brand-700">${score}<span class="text-3xl text-brand-400">/${total}</span></div>
+          <p class="text-brand-500 mt-2">câu đúng</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <button id="btn-replay" class="bg-gradient-to-r from-brand-500 to-brand-700 text-white font-bold py-3 rounded-2xl shadow-lg">🔄 Chơi lại</button>
+          <button id="btn-home2" class="bg-white text-brand-600 font-bold py-3 rounded-2xl shadow-lg border-2 border-brand-200">🏠 Trang chủ</button>
+        </div>
+      </div>
+    </section>`;
+
+  attachNavEvents({
+    onBack: () => {
+      if (r.chapter) renderChapterScreen();
+      else renderTrackScreen();
+    },
+    onHome: () => { renderStudentHome(); },
+  });
+  document.getElementById('btn-replay').addEventListener('click', () => { playSound('click'); startRound(); });
+  document.getElementById('btn-home2').addEventListener('click', () => { playSound('click'); renderStudentHome(); });
+}
+
+// ============================================
+// HẾT PATCH v3.3
+// ============================================
+window.logout = logout;
+window.renderSpinSelection = renderSpinSelection;
+// ============================================
+// PATCH v3.2 — ẨN PHỤ HUYNH + ĐỔI QUÀ TỰ ĐỘNG
+// ============================================
+
+// 1. Ẩn nút Phụ huynh
+const __style_p32 = document.createElement('style');
+__style_p32.textContent = `
+  .role-btn[data-role="parent"] { display: none !important; }
+  .role-btn[data-role="student"] { grid-column: span 2 / span 2; }
+`;
+document.head.appendChild(__style_p32);
+
+// 2. Không claim daily bonus khi login
+async function claimDailyBonusBackground() {
+  return; // Bỏ — chỉ claim sau khi chơi bài đầu tiên
+}
+
+// 3. Override submitRound — sau khi chơi, thử claim daily
+var __origSubmitRound_v32 = submitRound;
+submitRound = async function() {
+  const r = state.currentRound;
+  if (!r || r.submitted) return;
+  r.submitted = true;
+
+  if (r.timerId) clearInterval(r.timerId);
+  const score = r.score, total = r.questions.length;
+
+  if (score >= 7) { playSound('win'); fireConfetti(50); }
+  else if (score >= 4) { playSound('click'); }
+
+  if (state.currentUser) {
+    const prev = parseInt(state.currentUser.total_score) || 0;
+    state.currentUser.total_score = prev + score;
+    saveScoreLocal(state.currentUser.username, score);
+    invalidateUserStatus();
+  }
+
+  renderResultScreen(score, total, null);
+  __saveAndClaim_v32(score, total);
+};
+
+async function __saveAndClaim_v32(score, total) {
+  const r = state.currentRound;
+  if (!r || !state.currentUser || !state.isOnline) return;
+  try {
+    const rewardData = await apiCall('saveResult', {
+      user_id: state.currentUser.id,
+      subject_id: r.subject.id,
+      track_id: r.track.id,
+      score, total_questions: total, round_number: 1,
+    }, 'POST');
+    invalidateUserStatus();
+
+    // Thử claim daily bonus sau khi đã chơi 1 bài
+    await __tryClaimDaily_v32();
+
+    if (rewardData && (rewardData.streakRewardTriggered || rewardData.dailyRewardTriggered)) {
+      await loadUserStatus();
+      setTimeout(() => handleRewardTrigger(rewardData), 500);
+    }
+  } catch (err) { console.warn('[Save]', err); }
+}
+
+async function __tryClaimDaily_v32() {
+  const user = state.currentUser;
+  if (!user || !state.isOnline) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const lockKey = `vuihoc_daily_lock_${user.id}_${today}`;
+  if (localStorage.getItem(lockKey)) return;
+
+  try {
+    const bonus = await apiCall('claimDailyLogin', { user_id: user.id }, 'POST');
+    if (bonus && bonus.bonus > 0) {
+      localStorage.setItem(lockKey, '1');
+      invalidateUserStatus();
+      showToast(`🎁 Bé đã chơi bài đầu tiên hôm nay! Nhận ${formatVND(bonus.bonus)}`, 'success', 4000);
+      playSound('coin');
+    } else if (bonus && bonus.alreadyClaimed) {
+      localStorage.setItem(lockKey, '1');
+    }
+  } catch (err) { console.warn('[Daily]', err); }
+}
+
+// 4. Override renderWarehouseScreen — đổi quà tự động + lịch sử
+async function renderWarehouseScreen() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderNavBar({ showBack: true, showHome: true })}
+    <section class="flex-1 p-4 pt-20">
+      <div class="max-w-2xl mx-auto w-full bg-white/90 rounded-3xl shadow-2xl p-6">
+        <h2 class="font-baloo text-3xl font-bold text-brand-700 text-center mb-2">🎁 Kho quà</h2>
+        <p class="text-brand-500 text-center mb-6">Những phần quà bé đã nhận được</p>
+        <div id="warehouse-list"><div class="spinner"></div></div>
+      </div>
+    </section>`;
+  attachNavEvents({
+    onBack: () => { renderStudentHome(); },
+    onHome: () => { renderStudentHome(); },
+  });
+
+  let rewards = [];
+  let history = [];
+  try {
+    if (state.isOnline) {
+      rewards = (await apiCall('getUserRewards', { user_id: state.currentUser.id })) || [];
+      history = (await apiCall('getExchangeHistory', { user_id: state.currentUser.id })) || [];
+    }
+  } catch (err) { console.warn('[Warehouse]', err); }
+
+  const list = document.getElementById('warehouse-list');
+  if (!list) return;
+
+  if (rewards.length === 0 && history.length === 0) {
+    list.innerHTML = `
+      <div class="text-center p-8">
+        <div class="text-6xl mb-3">📭</div>
+        <p class="text-brand-500 font-bold mb-4">Kho quà đang trống</p>
+        <p class="text-brand-400 text-sm mb-6">Chơi game để nhận phần thưởng nhé!</p>
+        <button id="btn-go-play" class="bg-gradient-to-r from-brand-500 to-brand-700 text-white font-bold py-3 px-8 rounded-2xl">🎮 Chơi ngay</button>
+      </div>`;
+    document.getElementById('btn-go-play').addEventListener('click', () => { playSound('click'); renderSubjectScreen(); });
+    return;
+  }
+
+  const sourceLabel = { daily_login: '📅 Đăng nhập', streak_5: '🔥 Streak 5', daily_30: '💎 Daily 30', manual: '🎁' };
+  const totalValue = rewards.reduce((s, r) => s + (parseInt(r.value) || 0), 0);
+
+  let html = '';
+  if (rewards.length > 0) {
+    html += `
+      <div class="bg-gradient-to-r from-sunny to-coral rounded-3xl p-5 text-white mb-5 text-center">
+        <div class="text-sm opacity-90">Tổng giá trị kho</div>
+        <div class="font-baloo text-4xl font-extrabold">${formatVND(totalValue)}</div>
+        <div class="text-sm opacity-90 mt-1">${rewards.length} phần quà</div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        ${rewards.map((r) => `
+          <div class="reward-card">
+            <div>
+              <div class="text-xs opacity-90">${sourceLabel[r.source] || '🎁 Quà'}</div>
+              <div class="text-lg font-baloo">${formatVND(parseInt(r.value))}</div>
+            </div>
+            <div class="text-2xl">🎫</div>
+          </div>`).join('')}
+      </div>
+      <button id="btn-redeem" class="w-full bg-gradient-to-r from-mint to-sky text-white font-bold py-4 rounded-2xl shadow-lg hover:scale-105 transition mb-3">
+        💸 Đổi tất cả thành tiền (${formatVND(totalValue)})
+      </button>
+      <p class="text-xs text-brand-500 text-center mb-5">Sau khi đổi, phụ huynh sẽ trả tiền mặt cho bé</p>
+    `;
+  } else {
+    html += `<div class="text-center p-6 text-brand-500 font-bold">Chưa có quà trong kho</div>`;
+  }
+
+  if (history.length > 0) {
+    html += `
+      <div class="bg-brand-50 rounded-2xl p-4 mt-4">
+        <h3 class="font-baloo text-lg font-bold text-brand-700 mb-3">📜 Lịch sử đổi quà</h3>
+        <div class="space-y-2">
+          ${history.map((h) => {
+            const d = new Date(h.created_at);
+            const ds = d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'});
+            return `
+              <div class="flex justify-between items-center bg-white rounded-xl p-3">
+                <div>
+                  <div class="font-bold text-brand-700">${formatVND(h.total_value)}</div>
+                  <div class="text-xs text-brand-500">${h.count} phần quà • ${ds}</div>
+                </div>
+                <div class="text-2xl">✅</div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
+
+  list.innerHTML = html;
+
+  const redeemBtn = document.getElementById('btn-redeem');
+  if (redeemBtn) {
+    redeemBtn.addEventListener('click', async () => {
+      playSound('click');
+      const ok = await showConfirm('Đổi quà?', `Bé sẽ đổi ${rewards.length} phần quà (${formatVND(totalValue)}) thành tiền. Phụ huynh sẽ trả tiền mặt cho bé sau.`, '💸 Đổi', 'Hủy');
+      if (!ok) return;
+
+      const ids = rewards.map((r) => r.id).join(',');
+      try {
+        const res = await apiCall('exchangeRewards', {
+          user_id: state.currentUser.id,
+          reward_ids: ids,
+        }, 'POST');
+        if (res && res.ok) {
+          playSound('coin');
+          fireConfetti(40);
+          showToast(`Đổi thành công ${formatVND(res.total_value)}!`, 'success', 3000);
+          invalidateUserStatus();
+          setTimeout(() => renderWarehouseScreen(), 1500);
+        } else {
+          showToast((res && res.error) || 'Lỗi đổi quà', 'error');
+        }
+      } catch (err) {
+        console.warn('[Exchange]', err);
+        showToast('Lỗi kết nối', 'error');
+      }
+    });
+  }
+}
+
+// ============================================
+// HẾT PATCH v3.2
+// ============================================// ============================================
+// PATCH v3.3.1 — ĐĂNG KÝ PWA
+// ============================================
+
+// 1. Đảm bảo manifest + icon được link trong <head>
+(function ensurePWALinks() {
+  const head = document.head;
+  if (!document.querySelector('link[rel="manifest"]')) {
+    const l = document.createElement('link');
+    l.rel = 'manifest';
+    l.href = 'manifest.json';
+    head.appendChild(l);
+    console.log('[PWA] Đã thêm link manifest');
+  }
+  if (!document.querySelector('link[rel="icon"][type="image/svg+xml"]')) {
+    const i = document.createElement('link');
+    i.rel = 'icon';
+    i.type = 'image/svg+xml';
+    i.href = 'icon.svg';
+    head.appendChild(i);
+  }
+  if (!document.querySelector('link[rel="apple-touch-icon"]')) {
+    const a = document.createElement('link');
+    a.rel = 'apple-touch-icon';
+    a.href = 'icon-192.png';
+    head.appendChild(a);
+  }
+})();
+
+// 2. Đăng ký Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js', { scope: './' })
+      .then((reg) => console.log('[SW] OK:', reg.scope))
+      .catch((err) => console.error('[SW] Lỗi:', err));
+  });
+}
+
+// 3. Kiểm tra manifest load
+fetch('manifest.json')
+  .then((r) => r.ok ? r.json() : Promise.reject('HTTP ' + r.status))
+  .then((d) => console.log('[Manifest] OK:', d.name))
+  .catch((e) => console.warn('[Manifest] Lỗi:', e));
+
+// ============================================
+// HẾT PATCH v3.3.1
+// ============================================
+</script>
+
+</body>
+</html>

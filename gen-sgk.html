@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>🎲 Sinh câu hỏi SGK Toán 4</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: system-ui, sans-serif; }
+  .log { max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; }
+  .chapter-btn.active { background: #4F46E5; color: white; }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen p-6">
+
+<div class="max-w-4xl mx-auto">
+  <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
+    <h1 class="text-2xl font-bold text-indigo-700 mb-2">🎲 Sinh câu hỏi SGK Toán 4</h1>
+    <p class="text-gray-600 text-sm mb-4">
+      Chọn chương → bấm "Sinh CSV" → Import vào tab <code class="bg-gray-100 px-1 rounded">Questions</code>.
+    </p>
+
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Số câu mỗi chương:</label>
+        <input type="number" id="numQuestions" value="100" min="20" max="200"
+          class="w-full border-2 border-gray-200 rounded-lg px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Track ID:</label>
+        <input type="text" id="trackId" value="sgk4"
+          class="w-full border-2 border-gray-200 rounded-lg px-3 py-2" />
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-bold mb-2">Chọn chương:</label>
+      <div id="chapter-list" class="grid grid-cols-2 gap-2">
+        <!-- JS render -->
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button id="btn-gen" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl">
+        🚀 Sinh CSV cho chương đã chọn
+      </button>
+      <button id="btn-gen-all" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl">
+        📦 Sinh TẤT CẢ
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-lg p-6">
+    <h2 class="font-bold text-gray-700 mb-2">📊 Tiến trình:</h2>
+    <div id="log" class="log bg-gray-50 rounded-lg p-3 text-gray-700"></div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// HẠ TẦNG CHUNG
+// ============================================
+
+const CHAPTERS = [
+  { id: 'chuong_1', name: 'Chương 1: Ôn tập và bổ sung' },
+  { id: 'chuong_2', name: 'Chương 2: Góc và đơn vị đo góc' },
+  { id: 'chuong_3', name: 'Chương 3: Số có nhiều chữ số' },
+  { id: 'chuong_4', name: 'Chương 4: Đơn vị đo đại lượng' },
+  { id: 'chuong_5', name: 'Chương 5: Phép cộng và phép trừ' },
+  { id: 'chuong_6', name: 'Chương 6: Đường thẳng vuông góc, song song' },
+  { id: 'chuong_7', name: 'Chương 7: Ôn tập học kì 1' },
+  { id: 'chuong_8', name: 'Chương 8: Phép nhân và phép chia' },
+  { id: 'chuong_9', name: 'Chương 9: Thống kê, xác suất' },
+  { id: 'chuong_10', name: 'Chương 10: Phân số' },
+  { id: 'chuong_11', name: 'Chương 11: Cộng trừ phân số' },
+  { id: 'chuong_12', name: 'Chương 12: Nhân chia phân số' },
+  { id: 'chuong_13', name: 'Chương 13: Ôn tập cuối năm' },
+];
+
+let selectedChapter = 'chuong_1';
+
+function log(msg) {
+  const el = document.getElementById('log');
+  el.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function rand(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function makeOptions(correct, wrongGenerator, count = 4) {
+  const wrongs = new Set();
+  let attempts = 0;
+  while (wrongs.size < count - 1 && attempts < 200) {
+    const w = wrongGenerator();
+    if (w !== correct && !wrongs.has(w) && Number.isInteger(w) && w >= 0) {
+      wrongs.add(w);
+    }
+    attempts++;
+  }
+  while (wrongs.size < count - 1) {
+    const w = correct + rand(1, 20) * pick([-1, 1]);
+    if (w !== correct && w >= 0) wrongs.add(w);
+  }
+  const arr = shuffle([correct, ...wrongs]);
+  const correctIdx = arr.indexOf(correct);
+  const letter = ['A', 'B', 'C', 'D'][correctIdx];
+  return { options: arr.map(String), correct: letter };
+}
+
+// ============================================
+// CHƯƠNG 1: ÔN TẬP VÀ BỔ SUNG
+// ============================================
+function genChuong1() {
+  const list = [];
+  
+  // 1a. Đọc/viết số đến 100,000
+  for (let i = 0; i < 15; i++) {
+    const n = rand(10000, 99999);
+    const correct = n;
+    const opts = makeOptions(correct, () => correct + rand(1, 1000) * pick([-1, 1]));
+    const digits = String(n);
+    list.push({
+      question: `Số "${digits.split('').map((d, idx) => {
+        const labels = ['chục nghìn', 'nghìn', 'trăm', 'chục', 'đơn vị'];
+        return d !== '0' ? d + ' ' + labels[idx] : null;
+      }).filter(Boolean).join(', ')}" được viết là số nào?`,
+      options: opts.options, correct: opts.correct, difficulty: 1,
+    });
+  }
+
+  // 1b. Phép cộng trừ trong phạm vi 100,000
+  for (let i = 0; i < 20; i++) {
+    const a = rand(1000, 50000);
+    const b = rand(1000, 50000);
+    const isAdd = Math.random() < 0.5;
+    const correct = isAdd ? a + b : Math.abs(a - b);
+    const opts = makeOptions(correct, () => correct + rand(1, 500) * pick([-1, 1]));
+    list.push({
+      question: `${Math.max(a, b)} ${isAdd ? '+' : '−'} ${isAdd ? b : Math.min(a, b)} = ?`,
+      options: opts.options, correct: opts.correct, difficulty: 1,
+    });
+  }
+
+  // 1c. Số chẵn, số lẻ
+  for (let i = 0; i < 15; i++) {
+    const n = rand(100, 99999);
+    const isEven = n % 2 === 0;
+    const wantEven = Math.random() < 0.5;
+    const answer = wantEven === isEven ? 'Đúng' : 'Sai';
+    list.push({
+      question: `Số ${n} là số ${wantEven ? 'chẵn' : 'lẻ'}. Đúng hay sai?`,
+      options: ['Đúng', 'Sai', 'Không xác định', 'Cả hai đều đúng'],
+      correct: answer === 'Đúng' ? 'A' : 'B',
+      difficulty: 1,
+    });
+  }
+
+  // 1d. Biểu thức chứa chữ
+  for (let i = 0; i < 20; i++) {
+    const a = rand(1, 100);
+    const b = rand(1, 50);
+    const correct = a * 2 + b;
+    const opts = makeOptions(correct, () => correct + rand(1, 20) * pick([-1, 1]));
+    list.push({
+      question: `Tính giá trị biểu thức a × 2 + b với a = ${a}, b = ${b}.`,
+      options: opts.options, correct: opts.correct, difficulty: 2,
+    });
+  }
+
+  // 1e. Bài toán 3 bước
+  for (let i = 0; i < 15; i++) {
+    const a = rand(20, 100);
+    const b = a + rand(5, 30);
+    const c = a + b;
+    const correct = a + b + c;
+    const opts = makeOptions(correct, () => correct + rand(10, 100) * pick([-1, 1]));
+    list.push({
+      question: `Ngày 1 bán ${a} kg. Ngày 2 bán nhiều hơn ngày 1 là ${b - a} kg. Ngày 3 bán bằng tổng 2 ngày đầu. Hỏi cả 3 ngày bán được bao nhiêu kg?`,
+      options: opts.options, correct: opts.correct, difficulty: 3,
+    });
+  }
+
+  // 1f. Tính nhanh
+  for (let i = 0; i < 15; i++) {
+    const a = rand(10, 99) * 10;
+    const b = rand(10, 99);
+    const correct = a + b + (100 - b);
+    const opts = makeOptions(correct, () => correct + rand(1, 50) * pick([-1, 1]));
+    list.push({
+      question: `Tính nhanh: ${a} + ${b} + ${100 - b} = ?`,
+      options: opts.options, correct: opts.correct, difficulty: 2,
+    });
+  }
+
+  return list;
+}
+
+// ============================================
+// CHƯƠNG 2: GÓC VÀ ĐƠN VỊ ĐO GÓC
+// ============================================
+function genChuong2() {
+  const list = [];
+
+  // 2a. Nhận biết góc nhọn, vuông, tù, bẹt
+  const angleTypes = [
+    { type: 'góc nhọn', range: [1, 89] },
+    { type: 'góc vuông', range: [90, 90] },
+    { type: 'góc tù', range: [91, 179] },
+    { type: 'góc bẹt', range: [180, 180] },
+  ];
+
+  for (let i = 0; i < 30; i++) {
+    const a = pick(angleTypes);
+    const deg = a.range[0] === a.range[1] ? a.range[0] : rand(a.range[0], a.range[1]);
+    const correctText = a.type;
+    list.push({
+      question: `Góc có số đo ${deg}° thuộc loại góc nào?`,
+      options: ['Góc nhọn', 'Góc vuông', 'Góc tù', 'Góc bẹt'],
+      correct: ['A', 'B', 'C', 'D'][angleTypes.findIndex(t => t.type === correctText)],
+      difficulty: 1,
+    });
+  }
+
+  // 2b. So sánh góc
+  for (let i = 0; i < 25; i++) {
+    const a = rand(10, 170);
+    const b = rand(10, 170);
+    const isGreater = a > b;
+    list.push({
+      question: `So sánh: Góc ${a}° và góc ${b}°. Góc nào lớn hơn?`,
+      options: [`Góc ${a}°`, `Góc ${b}°`, 'Bằng nhau', 'Không so sánh được'],
+      correct: isGreater ? 'A' : (a === b ? 'C' : 'B'),
+      difficulty: 2,
+    });
+  }
+
+  // 2c. Đổi đơn vị đo góc
+  for (let i = 0; i < 25; i++) {
+    const deg = rand(1, 180);
+    list.push({
+      question: `Góc có số đo ${deg}° được viết là gì?`,
+      options: [`${deg}°`, `${deg}'`, `${deg}"`, `${deg} rad`],
+      correct: 'A',
+      difficulty: 1,
+    });
+  }
+
+  // 2d. Ứng dụng thực tế
+  for (let i = 0; i < 20; i++) {
+    const h = rand(1, 12);
+    const m = pick([0, 15, 30, 45]);
+    let deg;
+    if (m === 0) deg = h * 30;
+    else if (m === 30) deg = h * 30 + 15;
+    else deg = h * 30 + (m === 15 ? 7.5 : 22.5);
+    deg = Math.round(deg);
+    let type = deg === 90 ? 'góc vuông' : (deg < 90 ? 'góc nhọn' : (deg === 180 ? 'góc bẹt' : 'góc tù'));
+    list.push({
+      question: `Lúc ${h} giờ ${m === 0 ? 'đúng' : m + ' phút'}, kim giờ và kim phút tạo thành ${type} có số đo bao nhiêu?`,
+      options: [`${deg}°`, `${deg + 10}°`, `${Math.max(0, deg - 10)}°`, `${deg + 20}°`],
+      correct: 'A',
+      difficulty: 3,
+    });
+  }
+
+  return list;
+}
+
+// ============================================
+// CHƯƠNG 3: SỐ CÓ NHIỀU CHỮ SỐ
+// ============================================
+function genChuong3() {
+  const list = [];
+
+  // 3a. Đọc/viết số có 6 chữ số
+  for (let i = 0; i < 20; i++) {
+    const n = rand(100000, 999999);
+    const opts = makeOptions(n, () => n + rand(1, 10000) * pick([-1, 1]));
+    list.push({
+      question: `Số ${n.toLocaleString('vi-VN')} được đọc là gì?`,
+      options: opts.options.map((x, idx) => idx === opts.options.indexOf(String(n)) ? numToVN(n) : numToVN(parseInt(x))),
+      correct: ['A', 'B', 'C', 'D'][opts.options.indexOf(String(n))],
+      difficulty: 2,
+    });
+  }
+
+  // 3b. Hàng và lớp
+  for (let i = 0; i < 20; i++) {
+    const n = rand(100000, 999999);
+    const digitPos = rand(0, 5);
+    const digit = String(n)[digitPos];
+    const positions = ['trăm nghìn', 'chục nghìn', 'nghìn', 'trăm', 'chục', 'đơn vị'];
+    const correct = positions[digitPos];
+    list.push({
+      question: `Trong số ${n.toLocaleString('vi-VN')}, chữ số ${digit} thuộc hàng nào?`,
+      options: ['Hàng trăm nghìn', 'Hàng chục nghìn', 'Hàng nghìn', 'Hàng trăm'],
+      correct: ['A', 'B', 'C', 'D'][positions.indexOf(correct) % 4],
+      difficulty: 2,
+    });
+  }
+
+  // 3c. Làm tròn số
+  for (let i = 0; i < 20; i++) {
+    const n = rand(10000, 999999);
+    const correct = Math.round(n / 1000) * 1000;
+    const opts = makeOptions(correct, () => correct + rand(1, 5) * 1000 * pick([-1, 1]));
+    list.push({
+      question: `Làm tròn số ${n.toLocaleString('vi-VN')} đến hàng nghìn ta được số nào?`,
+      options: opts.options.map((x) => parseInt(x).toLocaleString('vi-VN')),
+      correct: opts.correct,
+      difficulty: 2,
+    });
+  }
+
+  // 3d. So sánh số
+  for (let i = 0; i < 20; i++) {
+    const a = rand(10000, 999999);
+    const b = rand(10000, 999999);
+    if (a === b) continue;
+    const isGreater = a > b;
+    list.push({
+      question: `So sánh: ${a.toLocaleString('vi-VN')} và ${b.toLocaleString('vi-VN')}`,
+      options: ['>', '<', '=', 'Không so sánh được'],
+      correct: isGreater ? 'A' : 'B',
+      difficulty: 1,
+    });
+  }
+
+  // 3e. Dãy số tự nhiên
+  for (let i = 0; i < 20; i++) {
+    const start = rand(100, 1000);
+    const step = rand(1, 5);
+    const seq = [start, start + step, start + 2 * step, start + 3 * step];
+    const next = start + 4 * step;
+    const opts = makeOptions(next, () => next + rand(1, 20) * pick([-1, 1]));
+    list.push({
+      question: `Số tiếp theo của dãy: ${seq.join(', ')}, ... là số nào?`,
+      options: opts.options, correct: opts.correct, difficulty: 1,
+    });
+  }
+
+  return list;
+}
+
+function numToVN(n) {
+  return n.toLocaleString('vi-VN');
+}
+
+// ============================================
+// CHƯƠNG 4: ĐƠN VỊ ĐO ĐẠI LƯỢNG
+// ============================================
+function genChuong4() {
+  const list = [];
+
+  // 4a. Yến, tạ, tấn
+  const massUnits = [
+    { from: 'yến', to: 'kg', factor: 10 },
+    { from: 'tạ', to: 'kg', factor: 100 },
+    { from: 'tấn', to: 'kg', factor: 1000 },
+    { from: 'tạ', to: 'yến', factor: 10 },
+    { from: 'tấn', to: 'tạ', factor: 10 },
+  ];
+  for (let i = 0; i < 25; i++) {
+    const u = pick(massUnits);
+    const x = rand(1, 50);
+    const correct = x * u.factor;
+    const opts = makeOptions(correct, () => correct + rand(1, 10) * pick([-1, 1]));
+    list.push({
+      question: `${x} ${u.from} = ? ${u.to}`,
+      options: opts.options, correct: opts.correct, difficulty: 1,
+    });
+  }
+
+  // 4b. dm², m², mm²
+  const areaUnits = [
+    { from: 'm²', to: 'dm²', factor: 100 },
+    { from: 'dm²', to: 'cm²', factor: 100 },
+    { from: 'cm²', to: 'mm²', factor: 100 },
+    { from: 'm²', to: 'cm²', factor: 10000 },
+  ];
+  for (let i = 0; i < 25; i++) {
+    const u = pick(areaUnits);
+    const x = rand(1, 20);
+    const correct = x * u.factor;
+    const opts = makeOptions(correct, () => correct + rand(1, 10) * u.factor * pick([-1, 1]));
+    list.push({
+      question: `${x} ${u.from} = ? ${u.to}`,
+      options: opts.options, correct: opts.correct, difficulty: 2,
+    });
+  }
+
+  // 4c. Giây, thế kỉ
+  for (let i = 0; i < 25; i++) {
+    const type = rand(1, 4);
+    let q, correct, opts;
+    if (type === 1) {
+      const x = rand(1, 10);
+      q = `${x} phút = ? giây`;
+      correct = x * 60;
+      opts = makeOptions(correct, () => correct + rand(1, 30) * pick([-1, 1]));
+    } else if (type === 2) {
+      const x = rand(1, 5);
+      q = `${x} giờ = ? phút`;
+      correct = x * 60;
+      opts = makeOptions(correct, () => correct + rand(1, 30) * pick([-1, 1]));
+    } else if (type === 3) {
+      const x = rand(1, 5);
+      q = `${x} thế kỉ = ? năm`;
+      correct = x * 100;
+      opts = makeOptions(correct, () => correct + rand(1, 50) * pick([-1, 1]));
+    } else {
+      const x = rand(2, 5);
+      q = `${x} giờ 30 phút = ? phút`;
+      correct = x * 60 + 30;
+      opts = makeOptions(correct, () => correct + rand(1, 30) * pick([-1, 1]));
+    }
+    list.push({ question: q, options: opts.options, correct: opts.correct, difficulty: 2 });
+  }
+
+  // 4d. Đo lường thực tế
+  for (let i = 0; i < 25; i++) {
+    const scenarios = [
+      { q: 'Con voi nặng khoảng:', correct: '4 tấn', wrongs: ['4 tạ', '4 yến', '4 kg'] },
+      { q: 'Cái bút chì nặng khoảng:', correct: '5 g', wrongs: ['5 kg', '5 yến', '5 tạ'] },
+      { q: 'Bao gạo nặng khoảng:', correct: '50 kg', wrongs: ['50 g', '50 yến', '50 tấn'] },
+      { q: 'Cái bàn học rộng khoảng:', correct: '1 m²', wrongs: ['1 dm²', '1 cm²', '1 mm²'] },
+    ];
+    const s = pick(scenarios);
+    const opts = shuffle([s.correct, ...s.wrongs]);
+    list.push({
+      question: s.q,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(s.correct)],
+      difficulty: 1,
+    });
+  }
+
+  return list;
+}
+
+// ============================================
+// CHƯƠNG 5: PHÉP CỘNG VÀ PHÉP TRỪ
+// ============================================
+function genChuong5() {
+  const list = [];
+
+  // 5a. Cộng trừ số có nhiều chữ số
+  for (let i = 0; i < 25; i++) {
+    const a = rand(10000, 999999);
+    const b = rand(10000, 999999);
+    const isAdd = Math.random() < 0.5;
+    const correct = isAdd ? a + b : Math.abs(a - b);
+    const opts = makeOptions(correct, () => correct + rand(1, 1000) * pick([-1, 1]));
+    list.push({
+      question: `${Math.max(a, b).toLocaleString('vi-VN')} ${isAdd ? '+' : '−'} ${isAdd ? b.toLocaleString('vi-VN') : Math.min(a, b).toLocaleString('vi-VN')} = ?`,
+      options: opts.options.map((x) => parseInt(x).toLocaleString('vi-VN')),
+      correct: opts.correct,
+      difficulty: 2,
+    });
+  }
+
+  // 5b. Tính chất giao hoán
+  for (let i = 0; i < 20; i++) {
+    const a = rand(100, 9999);
+    const b = rand(100, 9999);
+    list.push({
+      question: `${a.toLocaleString('vi-VN')} + ${b.toLocaleString('vi-VN')} = ${b.toLocaleString('vi-VN')} + ?`,
+      options: [String(a), String(b), String(a + b), String(a - b)],
+      correct: 'A',
+      difficulty: 1,
+    });
+  }
+
+  // 5c. Tính chất kết hợp
+  for (let i = 0; i < 20; i++) {
+    const a = rand(10, 99);
+    const b = rand(10, 99);
+    const c = rand(10, 99);
+    const correct = a + b + c;
+    const opts = makeOptions(correct, () => correct + rand(1, 20) * pick([-1, 1]));
+    list.push({
+      question: `Tính nhanh: ${a} + ${b} + ${c} = ?`,
+      options: opts.options, correct: opts.correct, difficulty: 2,
+    });
+  }
+
+  // 5d. Tìm 2 số biết tổng và hiệu
+  for (let i = 0; i < 25; i++) {
+    const small = rand(10, 200);
+    const diff = rand(5, 100);
+    const big = small + diff;
+    const sum = small + big;
+    const askBig = Math.random() < 0.5;
+    const correct = askBig ? big : small;
+    const opts = makeOptions(correct, () => correct + rand(1, 30) * pick([-1, 1]));
+    list.push({
+      question: `Tổng 2 số là ${sum}, hiệu là ${diff}. Tìm số ${askBig ? 'lớn' : 'bé'}.`,
+      options: opts.options, correct: opts.correct, difficulty: 3,
+    });
+  }
+
+  // 5e. Bài toán có lời văn
+  for (let i = 0; i < 10; i++) {
+    const a = rand(100, 500);
+    const diff = rand(20, 100);
+    const b = a + diff;
+    const sum = a + b;
+    const correct = a;
+    const opts = makeOptions(correct, () => correct + rand(10, 50) * pick([-1, 1]));
+    list.push({
+      question: `Hai thùng có tất cả ${sum} lít dầu. Thùng 1 nhiều hơn thùng 2 là ${diff} lít. Hỏi thùng 2 có bao nhiêu lít?`,
+      options: opts.options, correct: opts.correct, difficulty: 3,
+    });
+  }
+
+  return list;
+}
+
+// ============================================
+// CHƯƠNG 6: ĐƯỜNG THẲNG VUÔNG GÓC, SONG SONG
+// ============================================
+function genChuong6() {
+  const list = [];
+
+  // 6a. Nhận biết hình
+  const shapes = [
+    { name: 'Hình vuông', desc: '4 cạnh bằng nhau, 4 góc vuông' },
+    { name: 'Hình chữ nhật', desc: '2 cặp cạnh đối song song, 4 góc vuông' },
+    { name: 'Hình bình hành', desc: '2 cặp cạnh đối song song và bằng nhau' },
+    { name: 'Hình thoi', desc: '4 cạnh bằng nhau, 2 cặp cạnh đối song song' },
+  ];
+
+  for (let i = 0; i < 30; i++) {
+    const s = pick(shapes);
+    const isCorrect = Math.random() < 0.5;
+    const shown = isCorrect ? s : pick(shapes.filter((x) => x.name !== s.name));
+    const answer = isCorrect ? 'Đúng' : 'Sai';
+    list.push({
+      question: `${shown.desc} là đặc điểm của ${s.name}. Đúng hay sai?`,
+      options: ['Đúng', 'Sai', 'Không xác định', 'Tùy trường hợp'],
+      correct: answer === 'Đúng' ? 'A' : 'B',
+      difficulty: 2,
+    });
+  }
+
+  // 6b. Đếm cạnh song song
+  for (let i = 0; i < 25; i++) {
+    const shape = pick(['Hình vuông', 'Hình chữ nhật', 'Hình bình hành', 'Hình thoi']);
+    const pairs = shape === 'Hình vuông' || shape === 'Hình chữ nhật' ? 2 : 2;
+    list.push({
+      question: `${shape} có bao nhiêu cặp cạnh song song?`,
+      options: ['1', '2', '3', '4'],
+      correct: 'B',
+      difficulty: 2,
+    });
+  }
+
+  // 6c. Tính chất hình
+  for (let i = 0; i < 25; i++) {
+    const q = pick([
+      { q: 'Hình vuông có mấy góc vuông?', correct: '4', wrongs: ['1', '2', '3'] },
+      { q: 'Hình chữ nhật có mấy cặp cạnh song song?', correct: '2', wrongs: ['1', '3', '4'] },
+      { q: 'Hình thoi có mấy cạnh bằng nhau?', correct: '4', wrongs: ['2', '3', '1'] },
+      { q: 'Hình bình hành có mấy cặp cạnh đối song song?', correct: '2', wrongs: ['1', '3', '4'] },
+    ]);
+    const opts = shuffle([q.correct, ...q.wrongs]);
+    list.push({
+      question: q.q,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(q.correct)],
+      difficulty: 1,
+    });
+  }
+
+  // 6d. Đường vuông góc
+  for (let i = 0; i < 20; i++) {
+    const deg = pick([90, 90, 90, rand(1, 89), rand(91, 179)]);
+    const isPerp = deg === 90;
+    list.push({
+      question: `Hai đường thẳng cắt nhau tạo thành góc ${deg}°. Hỏi 2 đường thẳng đó có vuông góc không?`,
+      options: ['Có', 'Không', 'Chưa đủ dữ kiện', 'Tùy trường hợp'],
+      correct: isPerp ? 'A' : 'B',
+      difficulty: 2,
+    });
+  }
+
+  return list;
+}
+
+// ============================================
+// CHƯƠNG 7: ÔN TẬP HỌC KÌ 1
+// ============================================
+function genChuong7() {
+  const list = [];
+  // Trộn từ các chương 1-6
+  const all = [
+    ...genChuong1().slice(0, 30),
+    ...genChuong2().slice(0, 15),
+    ...genChuong3().slice(0, 20),
+    ...genChuong4().slice(0, 15),
+    ...genChuong5().slice(0, 10),
+    ...genChuong6().slice(0, 10),
+  ];
+  return shuffle(all);
+}
+
+// ============================================
+// UI
+// ============================================
+function renderChapterList() {
+  const container = document.getElementById('chapter-list');
+  container.innerHTML = CHAPTERS.map((c) => `
+    <button data-chapter="${c.id}"
+      class="chapter-btn ${c.id === selectedChapter ? 'active' : ''} border-2 border-indigo-200 rounded-lg py-2 px-3 text-sm font-bold text-left hover:bg-indigo-50">
+      ${c.name}
+    </button>
+  `).join('');
+  
+  container.querySelectorAll('.chapter-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedChapter = btn.dataset.chapter;
+      renderChapterList();
+    });
+  });
+}
+
+function csvEscape(s) {
+  let str = String(s == null ? '' : s);
+  // Nếu ô chỉ chứa phân số dạng a/b → prefix bằng ' để Sheets giữ nguyên text
+  if (/^\d+\/\d+$/.test(str)) {
+    str = "'" + str;
+  }
+  return '"' + str.replace(/"/g, '""') + '"';
+}
+function exportCSV(questions, chapterId) {
+  // THỨ TỰ CỘT KHỚP VỚI SHEET QUESTIONS
+  const headers = ['id', 'subject_id', 'track_id', 'question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct', 'difficulty', 'game_type', 'chapter_id'];
+  const rows = [headers];
+  
+  questions.forEach((q, i) => {
+    const qid = 'sgk_' + chapterId + '_' + String(i + 1).padStart(4, '0');
+    rows.push([
+      qid,
+      'toan',
+      'sgk4',
+      q.question,
+      q.options[0], q.options[1], q.options[2], q.options[3],
+      q.correct,
+      q.difficulty || 1,
+      'sgk',
+      chapterId,
+    ]);
+  });
+
+  const csv = rows.map((r) => r.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sgk-${chapterId}-${questions.length}cau.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+document.getElementById('btn-gen').addEventListener('click', () => {
+  const num = parseInt(document.getElementById('numQuestions').value) || 100;
+  log(`=== Sinh ${num} câu cho ${selectedChapter} ===`);
+  const questions = generateForChapter(selectedChapter, num);
+  if (questions.length === 0) {
+    log('❌ Không sinh được câu nào');
+    return;
+  }
+  exportCSV(questions, selectedChapter);
+  log(`✅ Đã tải file CSV (${questions.length} câu). Import vào Sheets.`);
+});
+
+document.getElementById('btn-gen-all').addEventListener('click', () => {
+  const num = parseInt(document.getElementById('numQuestions').value) || 100;
+  log(`=== Sinh TẤT CẢ ===`);
+  CHAPTERS.forEach((c) => {
+    const questions = generateForChapter(c.id, num);
+    if (questions.length > 0) {
+      setTimeout(() => {
+        exportCSV(questions, c.id);
+        log(`✅ ${c.name}: ${questions.length} câu`);
+      }, CHAPTERS.indexOf(c) * 500);
+    }
+  });
+});
+// ============================================
+// CHƯƠNG 8: PHÉP NHÂN VÀ PHÉP CHIA
+// ============================================
+function genChuong8() {
+  const list = [];
+
+  // 8a. Nhân với số có 1 chữ số
+  for (let i = 0; i < 20; i++) {
+    const a = rand(1000, 99999);
+    const b = rand(2, 9);
+    const correct = a * b;
+    const opts = makeOptions(correct, () => correct + rand(1, 1000) * pick([-1, 1]));
+    list.push({
+      question: `${a.toLocaleString('vi-VN')} × ${b} = ?`,
+      options: opts.options.map((x) => parseInt(x).toLocaleString('vi-VN')),
+      correct: opts.correct,
+      difficulty: 1,
+    });
+  }
+
+  // 8b. Nhân với số có 2 chữ số
+  for (let i = 0; i < 20; i++) {
+    const a = rand(10, 500);
+    const b = rand(11, 99);
+    const correct = a * b;
+    const opts = makeOptions(correct, () => correct + rand(1, 500) * pick([-1, 1]));
+    list.push({
+      question: `${a} × ${b} = ?`,
+      options: opts.options.map((x) => parseInt(x).toLocaleString('vi-VN')),
+      correct: opts.correct,
+      difficulty: 2,
+    });
+  }
+
+  // 8c. Nhân với 10, 100, 1000
+  for (let i = 0; i < 15; i++) {
+    const a = rand(10, 999);
+    const mult = pick([10, 100, 1000]);
+    const correct = a * mult;
+    const opts = makeOptions(correct, () => correct + rand(1, 100) * mult * pick([-1, 1]));
+    list.push({
+      question: `${a} × ${mult} = ?`,
+      options: opts.options.map((x) => parseInt(x).toLocaleString('vi-VN')),
+      correct: opts.correct,
+      difficulty: 1,
+    });
+  }
+
+  // 8d. Chia cho số có 1 chữ số
+  for (let i = 0; i < 20; i++) {
+    const b = rand(2, 9);
+    const quotient = rand(100, 9999);
+    const a = quotient * b + rand(0, b - 1);
+    const correct = Math.floor(a / b);
+    const opts = makeOptions(correct, () => correct + rand(1, 50) * pick([-1, 1]));
+    list.push({
+      question: `${a.toLocaleString('vi-VN')} : ${b} = ?`,
+      options: opts.options.map((x) => parseInt(x).toLocaleString('vi-VN')),
+      correct: opts.correct,
+      difficulty: 2,
+    });
+  }
+
+  // 8e. Chia cho số có 2 chữ số
+  for (let i = 0; i < 15; i++) {
+    const b = rand(11, 99);
+    const quotient = rand(10, 500);
+    const a = quotient * b + rand(0, b - 1);
+    const correct = Math.floor(a / b);
+    const opts = makeOptions(correct, () => correct + rand(1, 30) * pick([-1, 1]));
+    list.push({
+      question: `${a.toLocaleString('vi-VN')} : ${b} = ? (phần nguyên)`,
+      options: opts.options.map((x) => parseInt(x).toLocaleString('vi-VN')),
+      correct: opts.correct,
+      difficulty: 3,
+    });
+  }
+
+  // 8f. Tính chất giao hoán, kết hợp phép nhân
+  for (let i = 0; i < 15; i++) {
+    const a = rand(2, 9);
+    const b = rand(10, 99);
+    const correct = a * b;
+    const opts = makeOptions(correct, () => correct + rand(1, 50) * pick([-1, 1]));
+    list.push({
+      question: `${a} × ${b} = ${b} × ?`,
+      options: [String(a), String(b), String(a + b), String(a * b)],
+      correct: 'A',
+      difficulty: 1,
+    });
+  }
+
+  // 8g. Tính nhanh với 2×5, 4×25, 8×125
+  for (let i = 0; i < 15; i++) {
+    const tricks = [
+      { a: rand(2, 9), b: 5, mult: 2 },
+      { a: rand(2, 9), b: 25, mult: 4 },
+      { a: rand(2, 9), b: 125, mult: 8 },
+    ];
+    const t = pick(tricks);
+    const c = rand(10, 99);
+    const correct = c * t.a * t.b;
+    const opts = makeOptions(correct, () => correct + rand(1, 100) * pick([-1, 1]));
+    list.push({
+      question: `Tính nhanh: ${c} × ${t.a} × ${t.b} = ?`,
+      options: opts.options, correct: opts.correct, difficulty: 3,
+    });
+  }
+
+  // 8h. Bài toán rút về đơn vị
+  for (let i = 0; i < 15; i++) {
+    const boxes = rand(3, 10);
+    const itemsPerBox = rand(10, 30);
+    const total = boxes * itemsPerBox;
+    const askBoxes = rand(2, 5);
+    const correct = askBoxes * itemsPerBox;
+    const opts = makeOptions(correct, () => correct + rand(1, 20) * pick([-1, 1]));
+    list.push({
+      question: `${boxes} hộp đựng ${total} cái bánh. Hỏi ${askBoxes} hộp như thế đựng bao nhiêu cái bánh?`,
+      options: opts.options, correct: opts.correct, difficulty: 3,
+    });
+  }
+
+  return list;
+}
+
+// ============================================
+// CHƯƠNG 9: THỐNG KÊ, XÁC SUẤT
+// ============================================
+function genChuong9() {
+  const list = [];
+
+  // 9a. Dãy số liệu - đọc và trả lời
+  for (let i = 0; i < 25; i++) {
+    const n = rand(5, 8);
+    const data = Array.from({ length: n }, () => rand(5, 50));
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const askMax = Math.random() < 0.5;
+    const correct = askMax ? max : min;
+    const opts = makeOptions(correct, () => correct + rand(1, 10) * pick([-1, 1]));
+    list.push({
+      question: `Cho dãy số liệu: ${data.join(', ')}. Số ${askMax ? 'lớn nhất' : 'bé nhất'} là bao nhiêu?`,
+      options: opts.options, correct: opts.correct, difficulty: 1,
+    });
+  }
+
+  // 9b. Trung bình cộng từ dãy số liệu
+  for (let i = 0; i < 20; i++) {
+    const n = rand(3, 6);
+    let data = Array.from({ length: n }, () => rand(10, 100));
+    const sum = data.reduce((a, b) => a + b, 0);
+    const adjust = sum % n;
+    if (adjust !== 0) {
+      data[0] += n - adjust;
+    }
+    const sumAdj = data.reduce((a, b) => a + b, 0);
+    const tbc = sumAdj / n;
+    const opts = makeOptions(tbc, () => tbc + rand(1, 10) * pick([-1, 1]));
+    list.push({
+      question: `Trung bình cộng của dãy số liệu ${data.join(', ')} là bao nhiêu?`,
+      options: opts.options, correct: opts.correct, difficulty: 2,
+    });
+  }
+
+  // 9c. Biểu đồ cột - đọc số liệu
+  const categories = ['Bóng đá', 'Bóng rổ', 'Bơi', 'Cầu lông', 'Cờ vua', 'Đá cầu'];
+  for (let i = 0; i < 20; i++) {
+    const cat = pick(categories);
+    const value = rand(5, 50);
+    const maxVal = value + rand(5, 30);
+    const minVal = Math.max(1, value - rand(5, 20));
+    const askMax = Math.random() < 0.5;
+    const correct = askMax ? maxVal : minVal;
+    list.push({
+      question: `Biểu đồ cột cho biết: ${cat} có ${value} bạn thích, ${pick(categories.filter(c => c !== cat))} có ${maxVal} bạn, ${pick(categories.filter(c => c !== cat))} có ${minVal} bạn. Môn nào ${askMax ? 'được nhiều bạn thích nhất' : 'ít bạn thích nhất'}?`,
+      options: [cat, 'Môn A', 'Môn B', 'Không xác định'],
+      correct: askMax ? 'B' : 'A',
+      difficulty: 2,
+    });
+  }
+
+  // 9d. Xác suất đơn giản
+  for (let i = 0; i < 20; i++) {
+    const scenarios = [
+      { q: 'Trong hộp có 3 bóng đỏ và 1 bóng xanh. Lấy ngẫu nhiên 1 quả. Khả năng lấy được bóng đỏ như thế nào?', correct: 'Cao hơn bóng xanh', wrongs: ['Thấp hơn bóng xanh', 'Bằng nhau', 'Không thể lấy được'] },
+      { q: 'Gieo xúc xắc 1 lần. Khả năng ra mặt 6 chấm như thế nào?', correct: 'Có thể xảy ra', wrongs: ['Chắc chắn xảy ra', 'Không thể xảy ra', 'Luôn luôn xảy ra'] },
+      { q: 'Tung đồng xu 1 lần. Khả năng ra mặt sấp như thế nào?', correct: 'Có thể xảy ra', wrongs: ['Chắc chắn xảy ra', 'Không thể xảy ra', 'Không xác định'] },
+    ];
+    const s = pick(scenarios);
+    const opts = shuffle([s.correct, ...s.wrongs]);
+    list.push({
+      question: s.q,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(s.correct)],
+      difficulty: 2,
+    });
+  }
+
+  // 9e. Bảng số liệu kiểm đếm
+  for (let i = 0; i < 15; i++) {
+    const n = rand(20, 50);
+    const count = rand(5, n);
+    const correct = n - count;
+    const opts = makeOptions(correct, () => correct + rand(1, 10) * pick([-1, 1]));
+    list.push({
+      question: `Kiểm đếm ${n} lần gieo xúc xắc, có ${count} lần ra mặt chẵn. Hỏi có bao nhiêu lần ra mặt lẻ?`,
+      options: opts.options, correct: opts.correct, difficulty: 2,
+    });
+  }
+
+  return list;
+}
+
+// ============================================
+// CHƯƠNG 10: PHÂN SỐ
+// ============================================
+function gcd(a, b) {
+  return b === 0 ? a : gcd(b, a % b);
+}
+
+function genChuong10() {
+  const list = [];
+
+  // 10a. Khái niệm phân số - viết phân số
+  for (let i = 0; i < 20; i++) {
+    const m = rand(2, 12);
+    const t = rand(1, m - 1);
+    const correct = `${t}/${m}`;
+    const wrongs = [`${m}/${t}`, `${t}/${m + 1}`, `${t + 1}/${m}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `Đã tô màu ${t} phần trong ${m} phần bằng nhau của hình tròn. Phân số chỉ phần đã tô màu là gì?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 1,
+    });
+  }
+
+  // 10b. Đọc/viết phân số
+  for (let i = 0; i < 20; i++) {
+    const m = rand(2, 20);
+    const t = rand(1, m - 1);
+    const correct = `${t}/${m}`;
+    const wrongs = [`${m}/${t}`, `${t}/${m + 2}`, `${t + 1}/${m}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `Phân số "mười ${t} phần ${m}" được viết là gì?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 1,
+    });
+  }
+
+  // 10c. Phép chia → phân số
+  for (let i = 0; i < 20; i++) {
+    const a = rand(1, 20);
+    const b = rand(2, 20);
+    const correct = `${a}/${b}`;
+    const wrongs = [`${b}/${a}`, `${a}/${b + 1}`, `${a + 1}/${b}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `${a} : ${b} = ?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 2,
+    });
+  }
+
+  // 10d. Rút gọn phân số
+  for (let i = 0; i < 20; i++) {
+    const k = rand(2, 9);
+    const t = rand(1, 10);
+    const m = t + rand(1, 10);
+    const t2 = t * k;
+    const m2 = m * k;
+    const g = gcd(t, m);
+    const correct = `${t / g}/${m / g}`;
+    const wrongs = [`${t}/${m + 1}`, `${t + 1}/${m}`, `${t * 2}/${m * 2}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `Rút gọn phân số ${t2}/${m2} ta được phân số nào?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 2,
+    });
+  }
+
+  // 10e. Quy đồng mẫu số
+  for (let i = 0; i < 15; i++) {
+    const m1 = rand(2, 9);
+    const m2 = rand(2, 9);
+    const t1 = rand(1, m1 - 1);
+    const t2 = rand(1, m2 - 1);
+    const commonM = m1 * m2 / gcd(m1, m2);
+    const newT1 = t1 * (commonM / m1);
+    const newT2 = t2 * (commonM / m2);
+    const correct = `${newT1}/${commonM} và ${newT2}/${commonM}`;
+    const wrongs = [
+      `${t1}/${commonM} và ${t2}/${commonM}`,
+      `${newT1}/${m1 * m2} và ${newT2}/${m1 * m2}`,
+      `${newT2}/${commonM} và ${newT1}/${commonM}`,
+    ];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `Quy đồng mẫu số hai phân số ${t1}/${m1} và ${t2}/${m2} ta được?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 3,
+    });
+  }
+
+  // 10f. So sánh phân số cùng mẫu
+  for (let i = 0; i < 15; i++) {
+    const m = rand(2, 20);
+    const t1 = rand(1, m - 2);
+    const t2 = t1 + rand(1, m - t1 - 1);
+    const isGreater = t1 > t2;
+    list.push({
+      question: `So sánh: ${t1}/${m} và ${t2}/${m}`,
+      options: ['>', '<', '=', 'Không so sánh được'],
+      correct: isGreater ? 'A' : 'B',
+      difficulty: 2,
+    });
+  }
+
+  // 10g. So sánh phân số khác mẫu (đơn giản)
+  for (let i = 0; i < 10; i++) {
+    const m1 = rand(2, 5);
+    const m2 = rand(2, 5);
+    if (m1 === m2) continue;
+    const t1 = 1;
+    const t2 = 1;
+    const isGreater = t1 * m2 > t2 * m1;
+    list.push({
+      question: `So sánh: 1/${m1} và 1/${m2}`,
+      options: ['>', '<', '=', 'Không so sánh được'],
+      correct: isGreater ? 'A' : 'B',
+      difficulty: 3,
+    });
+  }
+
+  return list;
+}
+
+// ============================================
+// CHƯƠNG 11: CỘNG TRỪ PHÂN SỐ
+// ============================================
+function genChuong11() {
+  const list = [];
+
+  // 11a. Cộng phân số cùng mẫu
+  for (let i = 0; i < 25; i++) {
+    const m = rand(2, 20);
+    const t1 = rand(1, m - 1);
+    const t2 = rand(1, m - 1);
+    const sumT = t1 + t2;
+    const g = gcd(sumT, m);
+    const correct = `${sumT / g}/${m / g}`;
+    const wrongs = [`${sumT}/${m * 2}`, `${sumT + 1}/${m}`, `${t1 + t2}/${m + m}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `${t1}/${m} + ${t2}/${m} = ?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 2,
+    });
+  }
+
+  // 11b. Trừ phân số cùng mẫu
+  for (let i = 0; i < 25; i++) {
+    const m = rand(2, 20);
+    const t1 = rand(2, m - 1);
+    const t2 = rand(1, t1 - 1);
+    const subT = t1 - t2;
+    const g = gcd(subT, m);
+    const correct = `${subT / g}/${m / g}`;
+    const wrongs = [`${subT}/${m * 2}`, `${subT + 1}/${m}`, `${t1 - t2}/${m + m}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `${t1}/${m} − ${t2}/${m} = ?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 2,
+    });
+  }
+
+  // 11c. Cộng phân số khác mẫu (đơn giản)
+  for (let i = 0; i < 25; i++) {
+    const m1 = rand(2, 6);
+    const m2 = rand(2, 6);
+    if (m1 === m2) continue;
+    const t1 = rand(1, m1 - 1);
+    const t2 = rand(1, m2 - 1);
+    const commonM = m1 * m2 / gcd(m1, m2);
+    const newT1 = t1 * (commonM / m1);
+    const newT2 = t2 * (commonM / m2);
+    const sumT = newT1 + newT2;
+    const g = gcd(sumT, commonM);
+    const correct = `${sumT / g}/${commonM / g}`;
+    const wrongs = [`${sumT}/${commonM * 2}`, `${sumT + 1}/${commonM}`, `${t1 + t2}/${m1 + m2}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `${t1}/${m1} + ${t2}/${m2} = ?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 3,
+    });
+  }
+
+  // 11d. Trừ phân số khác mẫu
+  for (let i = 0; i < 15; i++) {
+    const m1 = rand(2, 8);
+    const m2 = rand(2, 8);
+    if (m1 === m2) continue;
+    const t1 = rand(2, m1 - 1);
+    const t2 = rand(1, m2 - 1);
+    const commonM = m1 * m2 / gcd(m1, m2);
+    const newT1 = t1 * (commonM / m1);
+    const newT2 = t2 * (commonM / m2);
+    if (newT1 <= newT2) continue;
+    const subT = newT1 - newT2;
+    const g = gcd(subT, commonM);
+    const correct = `${subT / g}/${commonM / g}`;
+    const wrongs = [`${subT}/${commonM * 2}`, `${subT + 1}/${commonM}`, `${newT2}/${commonM}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `${t1}/${m1} − ${t2}/${m2} = ?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 3,
+    });
+  }
+
+  // 11e. Bài toán có lời văn
+  for (let i = 0; i < 10; i++) {
+    const m = rand(5, 12);
+    const t1 = rand(1, m - 3);
+    const t2 = rand(1, m - t1 - 1);
+    const sumT = t1 + t2;
+    if (sumT >= m) continue;
+    const correct = `${sumT}/${m}`;
+    const wrongs = [`${sumT + 1}/${m}`, `${sumT}/${m + 1}`, `${t1}/${m}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `Một tấm vải dài 1 m. Lần 1 cắt ${t1}/${m} m, lần 2 cắt ${t2}/${m} m. Hỏi cả 2 lần cắt bao nhiêu phần mét vải?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 3,
+    });
+  }
+
+  return list;
+}
+
+// ============================================
+// CHƯƠNG 12: NHÂN CHIA PHÂN SỐ
+// ============================================
+function genChuong12() {
+  const list = [];
+
+  // 12a. Nhân 2 phân số
+  for (let i = 0; i < 25; i++) {
+    const t1 = rand(1, 9);
+    const m1 = rand(2, 9);
+    const t2 = rand(1, 9);
+    const m2 = rand(2, 9);
+    const num = t1 * t2;
+    const den = m1 * m2;
+    const g = gcd(num, den);
+    const correct = `${num / g}/${den / g}`;
+    const wrongs = [`${num}/${den + 1}`, `${num + 1}/${den}`, `${t1 * t2}/${m1 + m2}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `${t1}/${m1} × ${t2}/${m2} = ?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 2,
+    });
+  }
+
+  // 12b. Chia 2 phân số
+  for (let i = 0; i < 25; i++) {
+    const t1 = rand(1, 9);
+    const m1 = rand(2, 9);
+    const t2 = rand(1, 9);
+    const m2 = rand(2, 9);
+    // (t1/m1) : (t2/m2) = (t1*m2)/(m1*t2)
+    const num = t1 * m2;
+    const den = m1 * t2;
+    const g = gcd(num, den);
+    const correct = `${num / g}/${den / g}`;
+    const wrongs = [`${t1 * t2}/${m1 * m2}`, `${num}/${den + 1}`, `${num + 1}/${den}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `${t1}/${m1} : ${t2}/${m2} = ?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 3,
+    });
+  }
+
+  // 12c. Phân số đảo ngược
+  for (let i = 0; i < 15; i++) {
+    const t = rand(1, 9);
+    const m = rand(2, 9);
+    const correct = `${m}/${t}`;
+    const wrongs = [`${t}/${m}`, `${m + 1}/${t}`, `${t}/${m + 1}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `Phân số đảo ngược của ${t}/${m} là gì?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 1,
+    });
+  }
+
+  // 12d. Tìm phân số của một số
+  for (let i = 0; i < 20; i++) {
+    const n = rand(2, 8) * rand(2, 10);
+    const t = rand(1, 5);
+    const m = rand(t + 1, 6);
+    if (n % m !== 0) continue;
+    const correct = n * t / m;
+    const opts = makeOptions(correct, () => correct + rand(1, 20) * pick([-1, 1]));
+    list.push({
+      question: `${t}/${m} của ${n} là bao nhiêu?`,
+      options: opts.options, correct: opts.correct, difficulty: 2,
+    });
+  }
+
+  // 12e. Tính giá trị biểu thức với phân số
+  for (let i = 0; i < 15; i++) {
+    const t1 = rand(1, 5);
+    const m1 = rand(2, 6);
+    const t2 = rand(1, 5);
+    const m2 = rand(2, 6);
+    const t3 = rand(1, 5);
+    const m3 = rand(2, 6);
+    // (t1/m1 + t2/m2) × t3/m3 - đơn giản hóa
+    const num1 = t1 * m2 + t2 * m1;
+    const den1 = m1 * m2;
+    const numF = num1 * t3;
+    const denF = den1 * m3;
+    const g = gcd(numF, denF);
+    const correct = `${numF / g}/${denF / g}`;
+    const wrongs = [`${numF}/${denF + 1}`, `${numF + 1}/${denF}`, `${t1 + t2 + t3}/${m1 + m2 + m3}`];
+    const opts = shuffle([correct, ...wrongs]);
+    list.push({
+      question: `(${t1}/${m1} + ${t2}/${m2}) × ${t3}/${m3} = ?`,
+      options: opts,
+      correct: ['A', 'B', 'C', 'D'][opts.indexOf(correct)],
+      difficulty: 3,
+    });
+  }
+
+  return list;
+}
+
+// ============================================
+// CHƯƠNG 13: ÔN TẬP CUỐI NĂM
+// ============================================
+function genChuong13() {
+  const list = [];
+  // Trộn từ tất cả các chương
+  const all = [
+    ...genChuong1().slice(0, 8),
+    ...genChuong2().slice(0, 6),
+    ...genChuong3().slice(0, 10),
+    ...genChuong4().slice(0, 8),
+    ...genChuong5().slice(0, 10),
+    ...genChuong6().slice(0, 6),
+    ...genChuong8().slice(0, 10),
+    ...genChuong9().slice(0, 6),
+    ...genChuong10().slice(0, 10),
+    ...genChuong11().slice(0, 8),
+    ...genChuong12().slice(0, 8),
+  ];
+  return shuffle(all);
+}
+
+// ============================================
+// CẬP NHẬT MAP GENERATOR (quan trọng!)
+// ============================================
+// Tìm hàm generateForChapter() ở PHẦN 1 và THAY BẰNG đoạn dưới:
+function generateForChapter(chapterId, num) {
+  const map = {
+    chuong_1: genChuong1,
+    chuong_2: genChuong2,
+    chuong_3: genChuong3,
+    chuong_4: genChuong4,
+    chuong_5: genChuong5,
+    chuong_6: genChuong6,
+    chuong_7: genChuong7,
+    chuong_8: genChuong8,
+    chuong_9: genChuong9,
+    chuong_10: genChuong10,
+    chuong_11: genChuong11,
+    chuong_12: genChuong12,
+    chuong_13: genChuong13,
+  };
+  const fn = map[chapterId];
+  if (!fn) {
+    log(`⚠️ Chưa có generator cho ${chapterId}`);
+    return [];
+  }
+  let list = [];
+  let attempts = 0;
+  while (list.length < num && attempts < 50) {
+    list = list.concat(fn());
+    attempts++;
+  }
+  // Loại trùng câu hỏi
+  const seen = new Set();
+  const unique = [];
+  for (const q of list) {
+    if (!seen.has(q.question)) {
+      seen.add(q.question);
+      unique.push(q);
+    }
+    if (unique.length >= num) break;
+  }
+  return unique.slice(0, num);
+}
+renderChapterList();
+log('✅ Sẵn sàng. Chọn chương và bấm "Sinh CSV".');
+</script>
+</body>
+</html>
